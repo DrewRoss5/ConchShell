@@ -88,7 +88,6 @@ void input_loop(){
     char input[BUF_LEN];
     char* args[MAX_ARGS];
     char uname[UNAME_LEN];
-    // get and display the current working directory
     printf("%s > ", getlogin());
     // get the user's arguments and strip the newline
     fgets(input, BUF_LEN, stdin);
