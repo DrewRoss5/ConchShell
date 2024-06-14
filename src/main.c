@@ -15,20 +15,6 @@ char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "echof", "exit
 
 enum commands {CD=0, LS, CWD, CREATE, ECHOF, EXIT};
 
-int parse_args(char* input, char** args){
-    size_t arg_count = 0;
-    char* arg;
-    for (int i = 0; i < MAX_ARGS; i++){
-        arg = strsep(&input, " ");
-        if (arg == NULL)
-            return arg_count;
-        else{
-            args[i] = arg;
-            arg_count++;
-        }
-    }
-}
-
 int handle_command(char** args, int arg_count){
     char* command = args[0];
     size_t command_no = -1;
@@ -79,10 +65,27 @@ int handle_command(char** args, int arg_count){
             exit_shell();
             break;
         default:
-            printf("Unrecognized Command: %s\n", command);
+            if (strcmp("", command))
+                printf("Unrecognized Command: %s\n", command);
             break;
     }
 }
+
+
+int parse_args(char* input, char** args){
+    size_t arg_count = 0;
+    char* arg;
+    for (int i = 0; i < MAX_ARGS; i++){
+        arg = strsep(&input, " ");
+        if (arg == NULL)
+            return arg_count;
+        else{
+            args[i] = arg;
+            arg_count++;
+        }
+    }
+}
+
 
 void input_loop(){
     char input[BUF_LEN];
@@ -103,11 +106,9 @@ void interupt_handler (int _){
     input_loop();
 }
 
-
 int main(){
     signal(SIGINT, interupt_handler);
     signal(SIGTSTP, interupt_handler);
     system("clear");
     input_loop();
 }
-
