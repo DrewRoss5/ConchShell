@@ -8,7 +8,7 @@
 #define BUF_LEN 1024
 #define MAX_ARGS 32
 #define UNAME_LEN 32
-#define COMMAND_COUNT 6
+#define COMMAND_COUNT 7
 #define _GNU_SOURCE
 
 char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "echof", "clear", "exit"};
