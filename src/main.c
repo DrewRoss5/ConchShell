@@ -11,9 +11,9 @@
 #define COMMAND_COUNT 6
 #define _GNU_SOURCE
 
-char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "echof", "exit"};
+char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "echof", "clear", "exit"};
 
-enum commands {CD=0, LS, CWD, CREATE, ECHOF, EXIT};
+enum commands {CD=0, LS, CWD, CREATE, ECHOF, CLEAR, EXIT};
 
 int handle_command(char** args, int arg_count){
     char* command = args[0];
@@ -63,6 +63,9 @@ int handle_command(char** args, int arg_count){
             break;
         case EXIT:
             exit_shell();
+            break;
+        case CLEAR:
+            system("clear");
             break;
         default:
             if (strcmp("", command))
