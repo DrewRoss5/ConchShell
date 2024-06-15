@@ -17,6 +17,7 @@ Once you have created the `conch` binaries using cmake and make, simply run the 
 ### Current commands:
 - cd <path>
 - ls <path>
+- clear
 - cwd
   - prints the current working directory, much like `pwd`
 - create <path(s)>
