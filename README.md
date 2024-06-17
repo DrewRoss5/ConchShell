@@ -13,7 +13,7 @@ A Linux shell written in C, written as a hobbyist project
 
 # Installation
 To install conch, clone this repo, and from the conchShell directory, run the following commands (requires sudo access):<br>
-`chmod +x`<br>`./install/install.h`
+`chmod +x`<br>`sudo ./install/install.h`
 
 # Usage
 Once you have created the `conch` binaries using cmake and make, simply run the executable to enter the shell.
