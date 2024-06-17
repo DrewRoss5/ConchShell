@@ -3,7 +3,6 @@ A Linux shell written in C, written as a hobbyist project
 
 # Roadmap/ToDo:
 - Finish implementing basic utilities
-- Create an installer
 - Allow running external executables
 - Add a config file
 - Add support for aliases
@@ -11,6 +10,10 @@ A Linux shell written in C, written as a hobbyist project
 - Add pipelining
 - Add support for variables
 - Add scripting support
+
+# Installation
+To install conch, clone this repo, and from the conchShell directory, run the following commands (requires sudo access):<br>
+`chmod +x`<br>`./install/install.h`
 
 # Usage
 Once you have created the `conch` binaries using cmake and make, simply run the executable to enter the shell.
