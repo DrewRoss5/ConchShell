@@ -88,7 +88,8 @@ void print_file(char* path){
     char buf[FILE_BUF_LEN];
     while (fgets(buf, FILE_BUF_LEN, file))
         printf("%s", buf);
-    puts("\n\n");   
+    puts("");   
+    fclose(file);
 }
 
 // echos the proivded arguments
