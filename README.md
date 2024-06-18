@@ -13,7 +13,7 @@ A Linux shell written in C, written as a hobbyist project
 
 # Installation
 To install conch, clone this repo, and from the conchShell directory, run the following commands (requires sudo access):<br>
-`chmod +x`<br>`sudo ./install/install.h`
+`chmod install/install.sh +x`<br>`sudo ./install/install.h`
 
 # Usage
 Once you have created the `conch` binaries using cmake and make, simply run the executable to enter the shell.
@@ -26,6 +26,7 @@ Once you have created the `conch` binaries using cmake and make, simply run the 
 - create <path(s)>
   - creates new file(s) if they do not already exist. <br>For example `create foo bar` Will create two files, foo and bar
 - echo <argument(s)>
+    - functions like the `echo` command in bash, including using ">" to output to files.
 - echof <path(s)>
   - prints the contents of the provided files. Much like `cat`.
 - exit
