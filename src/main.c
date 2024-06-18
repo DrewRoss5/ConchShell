@@ -8,12 +8,12 @@
 #define BUF_LEN 1024
 #define MAX_ARGS 32
 #define UNAME_LEN 32
-#define COMMAND_COUNT 8
+#define COMMAND_COUNT 9
 #define _GNU_SOURCE
 
-char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "echo", "echof", "clear", "exit"};
+char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "echo", "echof", "clear", "exit"};
 
-enum commands {CD=0, LS, CWD, CREATE, ECHO, ECHOF, CLEAR, EXIT};
+enum commands {CD=0, LS, CWD, CREATE, CREATE_D, ECHO, ECHOF, CLEAR, EXIT};
 
 int handle_command(char** args, int arg_count){
     char* command = args[0];
@@ -51,6 +51,14 @@ int handle_command(char** args, int arg_count){
             else{
                 for (int i = 1; i < arg_count; i++)
                     create_file(args[i]);
+            }
+            break;
+        case CREATE_D:
+            if (arg_count < 2)
+                puts("This command takes a minimum of one argument");
+            else{
+                for (int i = 1; i < arg_count; i++)
+                    create_dir(args[i]);
             }
             break;
         case ECHO:

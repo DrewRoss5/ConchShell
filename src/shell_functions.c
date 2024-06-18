@@ -22,6 +22,18 @@ int file_exists(char* dir_name, char* file_name){
     return 0;
 }
 
+// returns the position of the first instance of a particular string in a list of arguments. Or -1 if it's not present
+int find_arg(char* target, char** args, int arg_count){
+    int pos = -1;
+    for (int i = 0; i < arg_count; i++){
+        if (strcmp(args[i], target) == 0){
+            pos = i;
+            break;
+        }
+    }
+    return pos;
+}
+
 // changes the current working directory
 void change_dir(char* path){
     if (chdir(path))
@@ -53,7 +65,16 @@ void create_file(char* path){
         printf("Could not create the file \"%s\". Does it already exist?\n", path);
         return;
     }
-    fopen(path, "w");
+    FILE* out = fopen(path, "w");
+    fclose(out);
+}
+
+
+// creates a new directory if not already present
+void create_dir(char* path){
+    if (mkdir(path, S_IRUSR))
+        printf("Failed to create the directory \"%s\"\nDoes it exist?", path);
+        
 }
 
 // prints the contents of a file
@@ -70,10 +91,28 @@ void print_file(char* path){
     puts("\n\n");   
 }
 
+// echos the proivded arguments
 void echo(char** args, int arg_count){
-    for (int i = 0; i < arg_count; i++)
-        printf("%s ", args[i]);
-    puts("");
+    // determine if the command should echo to a file or stdout
+    int insert_pos = find_arg(">", args, arg_count);
+    if (insert_pos == -1){
+        // echo the string to stdout
+        for (int i = 0; i < arg_count; i++)
+            printf("%s ", args[i]);
+        puts("");
+    }
+    else{
+        // echo the string to the provided file
+        // ensure a file was provided
+        if (insert_pos == (arg_count - 1))
+            puts("Please provide a file path to write to.");
+        else{
+            FILE* out = fopen(args[insert_pos + 1], "w");
+            for (int i = 0; i < insert_pos; i++)
+                fprintf(out, "%s ", args[i]);
+            fclose(out);
+        }
+    }
 }
 
 // exits the program
