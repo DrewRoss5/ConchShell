@@ -8,12 +8,12 @@
 #define BUF_LEN 1024
 #define MAX_ARGS 32
 #define UNAME_LEN 32
-#define COMMAND_COUNT 7
+#define COMMAND_COUNT 8
 #define _GNU_SOURCE
 
-char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "echof", "clear", "exit"};
+char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "echo", "echof", "clear", "exit"};
 
-enum commands {CD=0, LS, CWD, CREATE, ECHOF, CLEAR, EXIT};
+enum commands {CD=0, LS, CWD, CREATE, ECHO, ECHOF, CLEAR, EXIT};
 
 int handle_command(char** args, int arg_count){
     char* command = args[0];
@@ -52,6 +52,9 @@ int handle_command(char** args, int arg_count){
                 for (int i = 1; i < arg_count; i++)
                     create_file(args[i]);
             }
+            break;
+        case ECHO:
+            echo(args + 1, arg_count - 1);
             break;
         case ECHOF:
             if (arg_count < 2)

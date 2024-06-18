@@ -70,6 +70,12 @@ void print_file(char* path){
     puts("\n\n");   
 }
 
+void echo(char** args, int arg_count){
+    for (int i = 0; i < arg_count; i++)
+        printf("%s ", args[i]);
+    puts("");
+}
+
 // exits the program
 void exit_shell(){
     printf("Bye, %s\n", getlogin());
