@@ -47,7 +47,7 @@ int handle_command(char** args, int arg_count){
             break;
         case CREATE:
             if (arg_count < 2)
-                puts("This command takes a minimum of one argument");
+                puts("error: create: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     create_file(args[i]);
@@ -55,7 +55,7 @@ int handle_command(char** args, int arg_count){
             break;
         case CREATE_D:
             if (arg_count < 2)
-                puts("This command takes a minimum of one argument");
+                puts("error: created: please provide a directory opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     create_dir(args[i]);
@@ -66,7 +66,7 @@ int handle_command(char** args, int arg_count){
             break;
         case ECHOF:
             if (arg_count < 2)
-                puts("This command takes a minimum of one argument");
+                puts("error: echof: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     print_file(args[i]);
@@ -80,7 +80,7 @@ int handle_command(char** args, int arg_count){
             break;
         default:
             if (strcmp("", command))
-                printf("Unrecognized Command: %s\n", command);
+                printf("error: %s: unrecognized file or command\n", command);
             break;
     }
 }

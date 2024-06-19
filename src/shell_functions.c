@@ -37,7 +37,7 @@ int find_arg(char* target, char** args, int arg_count){
 // changes the current working directory
 void change_dir(char* path){
     if (chdir(path))
-        printf("Invalid path: \"%s\"\n", path);
+        printf("error: %s: directory not found", path);
 }
 
 // runs the LS command
@@ -62,7 +62,7 @@ void print_cwd(){
 // creates a new file if it does not already exist
 void create_file(char* path){
     if (!access(path, F_OK)){
-        printf("Could not create the file \"%s\". Does it already exist?\n", path);
+        printf("error: %s: cannot create file\n", path);
         return;
     }
     FILE* out = fopen(path, "w");
@@ -73,7 +73,7 @@ void create_file(char* path){
 // creates a new directory if not already present
 void create_dir(char* path){
     if (mkdir(path, S_IRUSR))
-        printf("Failed to create the directory \"%s\"\nDoes it exist?", path);
+        printf("error: %s: cannot create directory\n", path);
         
 }
 
@@ -81,7 +81,7 @@ void create_dir(char* path){
 void print_file(char* path){
     // ensure the file can be read
     if (access(path, F_OK)){
-        printf("Failed to open the file: \"%s\" does it exist?\n", path);
+        printf("error: %s: cannot read file\n", path);
         return;
     }
     FILE* file = fopen(path, "r");
@@ -106,8 +106,9 @@ void echo(char** args, int arg_count){
         // echo the string to the provided file
         // ensure a file was provided
         if (insert_pos == (arg_count - 1))
-            puts("Please provide a file path to write to.");
+            puts("error: insertion operator missing right operand");
         else{
+            // write the file contents
             FILE* out = fopen(args[insert_pos + 1], "w");
             for (int i = 0; i < insert_pos; i++)
                 fprintf(out, "%s ", args[i]);
