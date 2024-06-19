@@ -42,13 +42,13 @@ void change_dir(char* path){
 }
 
 // runs the LS command
-// TODO: allow this to optionally display hidden files
-void list_dir(char* path){
+void list_dir(char* path, char** flags, int flag_count){
+    int show_all = (find_str("-a", flags, flag_count) == -1) ? 0 : 1;
     DIR* dir = opendir(path);
     struct dirent* file;
     printf("\t%s:\n", path);
     while ((file = readdir(dir))){
-        if (file->d_name[0] != '.')
+        if (file->d_name[0] != '.' || show_all)
             printf("\t\t%s\n", file->d_name);
     }
 }

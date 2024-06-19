@@ -76,7 +76,7 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 getcwd(path, BUF_LEN);
             else
                 path = args[1];
-            list_dir(path);
+            list_dir(path, flags, flag_count);
             break;
         case CWD:
             print_cwd();
