@@ -7,8 +7,9 @@
 #include <dirent.h>
 #include "shell_functions.h"
 
-#define CWD_BUF_LEN 256
+#define PATH_LEN 256
 #define FILE_BUF_LEN 1024
+#define _GNU_S
 
 // this will be used for future features
 // returns true if dir contains file, otherwise, false
@@ -22,11 +23,11 @@ int file_exists(char* dir_name, char* file_name){
     return 0;
 }
 
-// returns the position of the first instance of a particular string in a list of arguments. Or -1 if it's not present
-int find_arg(char* target, char** args, int arg_count){
+// returns the position of the first instance of a particular string in an array of strings. Or -1 if it's not present
+int find_str(char* target, char** arr, int size){
     int pos = -1;
-    for (int i = 0; i < arg_count; i++){
-        if (strcmp(args[i], target) == 0){
+    for (int i = 0; i < size; i++){
+        if (strcmp(arr[i], target) == 0){
             pos = i;
             break;
         }
@@ -43,10 +44,10 @@ void change_dir(char* path){
 // runs the LS command
 // TODO: allow this to optionally display hidden files
 void list_dir(char* path){
-    DIR* d = opendir(path);
+    DIR* dir = opendir(path);
     struct dirent* file;
     printf("\t%s:\n", path);
-    while ((file = readdir(d))){
+    while ((file = readdir(dir))){
         if (file->d_name[0] != '.')
             printf("\t\t%s\n", file->d_name);
     }
@@ -54,8 +55,8 @@ void list_dir(char* path){
 
 // displays the current working directory
 void print_cwd(){
-    char cwd[CWD_BUF_LEN];
-    getcwd(cwd, CWD_BUF_LEN);
+    char cwd[PATH_LEN];
+    getcwd(cwd, PATH_LEN);
     printf("%s\n", cwd);
 }
 
@@ -72,9 +73,14 @@ void create_file(char* path){
 
 // creates a new directory if not already present
 void create_dir(char* path){
-    if (mkdir(path, S_IRUSR))
+    if (mkdir(path, 0777))
         printf("error: %s: cannot create directory\n", path);
         
+}
+
+void delete_file(char* path){
+    if (remove(path))
+        printf("error: %s: failed to delete the file, does it exist?\n", path);
 }
 
 // prints the contents of a file
@@ -92,10 +98,41 @@ void print_file(char* path){
     fclose(file);
 }
 
+// recursively deletes a directory and children
+void delete_recusive(char* path){
+    DIR* dir = opendir(path);
+    struct dirent* file;
+    char tmp[(2 * PATH_LEN) + 1];
+
+    while((file = readdir(dir))){
+        if (strcmp(file->d_name, ".") && strcmp(file->d_name, "..")){
+            sprintf(tmp, "%s/%s", path, file->d_name);
+            if (file->d_type == DT_DIR){
+                delete_recusive(tmp);
+            }
+            else{
+                delete_file(tmp);
+            }
+        }
+    }
+    rmdir(path);
+}
+
+// deletes a directory, 
+void delete_directory(char* path, char** flags, int flag_count){
+    if (find_str("-r", flags, flag_count) == -1){
+        if (rmdir(path))
+            printf("error: %s: cannot delete the directory (run with the -r flag to delete contents)\n", path);
+    }
+    else{
+        delete_recusive(path);
+    }
+}
+
 // echos the proivded arguments
 void echo(char** args, int arg_count){
     // determine if the command should echo to a file or stdout
-    int insert_pos = find_arg(">", args, arg_count);
+    int insert_pos = find_str(">", args, arg_count);
     if (insert_pos == -1){
         // echo the string to stdout
         for (int i = 0; i < arg_count; i++)

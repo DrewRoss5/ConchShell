@@ -8,6 +8,8 @@ void list_dir(char* path);
 void print_cwd();
 void create_file(char* path);
 void create_dir(char* path);
+void delete_file(char* path);
+void delete_directory(char* path, char** flags, int flag_count);
 void print_file(char* path);
 void echo(char** args, int arg_count);
 void exit_shell();
