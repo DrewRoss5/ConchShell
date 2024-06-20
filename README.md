@@ -32,6 +32,7 @@ Once you have installed conch, simply call `conch` to enter the shell.
   - Deletes the provided file(s)
 - rmdir \[-r] <path(s)>
   - Deletes the provided directory(ies). Must be run with `-r` flag to delete non-empty directories.
+- cp <source> <destination>
 - echo <argument(s)>
     - functions like the `echo` command in bash, including using ">" to output to files.
 - echof <path(s)>
