@@ -188,3 +188,11 @@ int copy_file(char* src, char* dest){
     fclose(out_file);
     return 0;
 }
+
+int move_file(char* src, char* dest){
+    if (copy_file(src, dest))
+        return 1;
+    if (delete_file(src))
+        return 2;
+    return 0;
+}

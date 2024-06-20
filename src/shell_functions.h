@@ -13,3 +13,4 @@ int delete_directory(char* path, char** flags, int flag_count);
 int print_file(char* path);
 int echo(char** args, int arg_count);
 int copy_file(char* src, char* dest);
+int move_file(char* src, char* dest);

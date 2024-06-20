@@ -9,12 +9,12 @@
 #define MAX_ARGS 256
 #define MAX_FLAGS 256
 #define UNAME_LEN 32
-#define COMMAND_COUNT 12
+#define COMMAND_COUNT 13
 #define _GNU_SOURCE
 
-char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "echo", "echof", "clear", "exit"};
+char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "clear", "exit"};
 
-enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, ECHO, ECHOF, CLEAR, EXIT};
+enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, CLEAR, EXIT};
 
 // takes the string of user input and writes it as an array of arguments
 int parse_args(char* input, char** args){
@@ -131,8 +131,25 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
         case CP:
             if (arg_count != 3)
                 puts("error: cp: command accepts exactly two arguments");
+                break;
             if (copy_file(args[1], args[2]))
                 printf("error: %s: could not read the file\n", args[1]);
+            break;
+        case MV:
+            if (arg_count != 3){
+                puts("error: mv: command accepts exactly two arguments");
+                break;
+            }
+            switch (move_file(args[1], args[2])){
+                case 0:
+                    break;
+                case 1:
+                    printf("error: %s: could not access file\n", args[1]);
+                    break;
+                case 2:
+                    printf("error: %s: could not delete source file\n", args[1]);
+                    break;
+            }
             break;
         case ECHO:
             int error = echo(args + 1, arg_count - 1);
