@@ -36,59 +36,77 @@ int find_str(char* target, char** arr, int size){
 }
 
 // changes the current working directory
-void change_dir(char* path){
-    if (chdir(path))
+int change_dir(char* path){
+    if (chdir(path)){
         printf("error: %s: directory not found\n", path);
+        return 1;
+    }
+    return 0;
 }
 
 // runs the LS command
-void list_dir(char* path, char** flags, int flag_count){
-    int show_all = (find_str("-a", flags, flag_count) == -1) ? 0 : 1;
+int list_dir(char* path, char** flags, int flag_count){
+    // open the file and ensure if it exists
     DIR* dir = opendir(path);
+    if (!dir){
+        printf("error: %s: directory could not be read\n", path);
+        return 1;
+    } 
+    // determine if we're showing hidden directories
+    int show_all = (find_str("-a", flags, flag_count) == -1) ? 0 : 1;
+    // print the directory contents
     struct dirent* file;
     printf("\t%s:\n", path);
     while ((file = readdir(dir))){
         if (file->d_name[0] != '.' || show_all)
             printf("\t\t%s\n", file->d_name);
     }
+    return 0;
 }
 
 // displays the current working directory
-void print_cwd(){
+int print_cwd(){
     char cwd[PATH_LEN];
     getcwd(cwd, PATH_LEN);
     printf("%s\n", cwd);
+    return 0;
 }
 
 // creates a new file if it does not already exist
-void create_file(char* path){
-    if (!access(path, F_OK)){
-        printf("error: %s: cannot create file\n", path);
-        return;
-    }
+int create_file(char* path){
     FILE* out = fopen(path, "w");
+    if (!out){
+        printf("error: %s: cannot create file\n", path);
+        return 1;
+    }
     fclose(out);
+    return 0;
 }
 
 // creates a new directory if not already present
-void create_dir(char* path){
-    if (mkdir(path, 0777))
+int create_dir(char* path){
+    if (mkdir(path, 0777)){
         printf("error: %s: cannot create directory\n", path);
-        
+        return 1;
+    }
+    return 0;   
 }
 
-void delete_file(char* path){
-    if (remove(path))
+int delete_file(char* path){
+    if (remove(path)){
         printf("error: %s: failed to delete the file, does it exist?\n", path);
+        return 1;
+    }
+
 }
 
 // prints the contents of a file
-void print_file(char* path){
+int print_file(char* path){
     FILE* file = fopen(path, "r");
     // ensure the file can be read
     if (!file){
         printf("error: %s: cannot read file\n", path);
-        return;
+        return 1;
     }
     // print the file
     char buf[FILE_BUF_LEN];
@@ -96,41 +114,45 @@ void print_file(char* path){
         printf("%s", buf);
     puts("");   
     fclose(file);
+    return 0;
 }
 
 // recursively deletes a directory and children
-void delete_recusive(char* path){
+int delete_recusive(char* path){
     DIR* dir = opendir(path);
     struct dirent* file;
     char tmp[(2 * PATH_LEN) + 1];
-
+    if (!path){
+        printf("error: %s: could not delete file\n", path);
+        return 1;
+    }
     while((file = readdir(dir))){
         if (strcmp(file->d_name, ".") && strcmp(file->d_name, "..")){
             sprintf(tmp, "%s/%s", path, file->d_name);
-            if (file->d_type == DT_DIR){
-                delete_recusive(tmp);
-            }
-            else{
+            if (file->d_type == DT_DIR)
+                delete_recusive(tmp)
+            else
                 delete_file(tmp);
-            }
         }
     }
     rmdir(path);
+    return 0;
 }
 
 // deletes a directory, 
-void delete_directory(char* path, char** flags, int flag_count){
+int delete_directory(char* path, char** flags, int flag_count){
     if (find_str("-r", flags, flag_count) == -1){
-        if (rmdir(path))
+        if (rmdir(path)){
             printf("error: %s: cannot delete the directory (run with the -r flag to delete contents)\n", path);
+            return 1;
+        }
     }
-    else{
-        delete_recusive(path);
-    }
+    else
+        return delete_recusive(path);
 }
 
 // echos the proivded arguments
-void echo(char** args, int arg_count){
+int echo(char** args, int arg_count){
     // determine if the command should echo to a file or stdout
     int insert_pos = find_str(">", args, arg_count);
     if (insert_pos == -1){
@@ -142,27 +164,35 @@ void echo(char** args, int arg_count){
     else{
         // echo the string to the provided file
         // ensure a file was provided
-        if (insert_pos == (arg_count - 1))
+        if (insert_pos == (arg_count - 1)){
             puts("error: insertion operator missing right operand\n");
+            return 1;
+        }
         else{
             // write the file contents
-            FILE* out = fopen(args[insert_pos + 1], "w");
+            char* path = args[insert_pos + 1];
+            FILE* out = fopen(path, "w");
+            if (!file){
+                printf("error: %s: cannot open file\n", path)
+                return 1;
+            }
             for (int i = 0; i < insert_pos; i++)
                 fprintf(out, "%s ", args[i]);
             fclose(out);
         }
     }
+    return 0;
 }
 
 // copies the contents of a file to another destination
-void copy_file(char* src, char* dest){
+int copy_file(char* src, char* dest){
     // copy the file
     FILE* in_file = fopen(src, "rb");
     FILE* out_file = fopen(dest, "wb");
     // ensure both files are valid
     if (!in_file || !out_file){
-        printf("error: %s: could not copy file\n", src);
-        return;
+        printf("error: %s: could not read the file\n", src);
+        return 1;
     }
     // get the size of the input file
     fseek(in_file, 0L, SEEK_END);
@@ -176,4 +206,5 @@ void copy_file(char* src, char* dest){
     free(buf);
     fclose(in_file);
     fclose(out_file);
+    return 0;
 }
