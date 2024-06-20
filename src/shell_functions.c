@@ -38,7 +38,7 @@ int find_str(char* target, char** arr, int size){
 // changes the current working directory
 void change_dir(char* path){
     if (chdir(path))
-        printf("error: %s: directory not found", path);
+        printf("error: %s: directory not found\n", path);
 }
 
 // runs the LS command
@@ -70,7 +70,6 @@ void create_file(char* path){
     fclose(out);
 }
 
-
 // creates a new directory if not already present
 void create_dir(char* path){
     if (mkdir(path, 0777))
@@ -85,12 +84,13 @@ void delete_file(char* path){
 
 // prints the contents of a file
 void print_file(char* path){
+    FILE* file = fopen(path, "r");
     // ensure the file can be read
-    if (access(path, F_OK)){
+    if (!file){
         printf("error: %s: cannot read file\n", path);
         return;
     }
-    FILE* file = fopen(path, "r");
+    // print the file
     char buf[FILE_BUF_LEN];
     while (fgets(buf, FILE_BUF_LEN, file))
         printf("%s", buf);
@@ -143,7 +143,7 @@ void echo(char** args, int arg_count){
         // echo the string to the provided file
         // ensure a file was provided
         if (insert_pos == (arg_count - 1))
-            puts("error: insertion operator missing right operand");
+            puts("error: insertion operator missing right operand\n");
         else{
             // write the file contents
             FILE* out = fopen(args[insert_pos + 1], "w");
@@ -154,8 +154,26 @@ void echo(char** args, int arg_count){
     }
 }
 
-// exits the program
-void exit_shell(){
-    printf("Bye, %s\n", getlogin());
-    exit(0);
+// copies the contents of a file to another destination
+void copy_file(char* src, char* dest){
+    // copy the file
+    FILE* in_file = fopen(src, "rb");
+    FILE* out_file = fopen(dest, "wb");
+    // ensure both files are valid
+    if (!in_file || !out_file){
+        printf("error: %s: could not copy file\n", src);
+        return;
+    }
+    // get the size of the input file
+    fseek(in_file, 0L, SEEK_END);
+    size_t file_size = ftell(in_file);
+    rewind(in_file);
+    // read the file
+    unsigned char* buf = (unsigned char*) malloc(sizeof(unsigned char) * file_size);
+    fread(buf, file_size, 1, in_file);
+    fwrite(buf, file_size, 1, out_file);
+    // clean up
+    free(buf);
+    fclose(in_file);
+    fclose(out_file);
 }

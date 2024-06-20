@@ -9,12 +9,12 @@
 #define MAX_ARGS 256
 #define MAX_FLAGS 256
 #define UNAME_LEN 32
-#define COMMAND_COUNT 11
+#define COMMAND_COUNT 12
 #define _GNU_SOURCE
 
-char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "echo", "echof", "clear", "exit"};
+char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "echo", "echof", "clear", "exit"};
 
-enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, ECHO, ECHOF, CLEAR, EXIT};
+enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, ECHO, ECHOF, CLEAR, EXIT};
 
 // takes the string of user input and writes it as an array of arguments
 int parse_args(char* input, char** args){
@@ -113,6 +113,11 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                     delete_directory(args[i], flags, flag_count);
             }
             break;
+        case CP:
+            if (arg_count != 3)
+                puts("error: cp: command accepts exactly two arguments");
+            copy_file(args[1], args[2]);
+            break;
         case ECHO:
             echo(args + 1, arg_count - 1);
             break;
@@ -125,8 +130,7 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
             }
             break;
         case EXIT:
-            exit_shell();
-            break;
+            return 1;
         case CLEAR:
             system("clear");
             break;
@@ -135,6 +139,7 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 printf("error: %s: unrecognized file or command\n", command);
             break;
     }
+    return 0;
 }
 
 // recieves and processes user input, then handles the given command
@@ -152,14 +157,14 @@ void input_loop(){
     // parse the arguments and flags
     int flag_count = parse_flags(raw_args, args, flags, arg_count);
     arg_count -= flag_count;
-    handle_command(raw_args, args, flags, arg_count, flag_count);
-    input_loop();
+    int exit = handle_command(raw_args, args, flags, arg_count, flag_count);
+    if (!exit)
+        input_loop();
 }
 
 // prevent escape with an interup
 void interupt_handler (int _){
-    puts("\n");
-    input_loop();
+    printf("%s> ", getlogin());
 }
 
 int main(){
