@@ -69,14 +69,16 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 asprintf(&path, "/home/%s/", getlogin());
             else
                 path = args[1];
-            change_dir(path);
+            if (change_dir(path))
+                printf("error: %s: directory not found\n", path);
             break;
         case LS:
             if (arg_count == 1)
                 getcwd(path, BUF_LEN);
             else
                 path = args[1];
-            list_dir(path, flags, flag_count);
+            if (list_dir(path, flags, flag_count))
+                printf("error: %s: directory could not be read\n", path);
             break;
         case CWD:
             print_cwd();
@@ -86,7 +88,8 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 puts("error: create: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
-                    create_file(args[i]);
+                    if (create_file(args[i]))
+                        printf("error: %s: cannot create file\n", args[i]);
             }
             break;
         case CREATE_D:
@@ -94,7 +97,8 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 puts("error: created: please provide a directory opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
-                    create_dir(args[i]);
+                    if (create_dir(args[i]))
+                        printf("error: %s: cannot create directory\n", args[i]);
             }
             break;
         case DEL:
@@ -102,7 +106,8 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 puts("error: del: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
-                    delete_file(args[i]);
+                    if (delete_file(args[i]))
+                        printf("error: %s: failed to delete the file, does it exist?\n", args[i]);
             }
             break;
         case RMDIR:
@@ -110,23 +115,45 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 puts("error: rmdir: please provide a path operand");
             else{
                 for (int i = 1; i < arg_count; i++)
-                    delete_directory(args[i], flags, flag_count);
-            }
+                    switch (delete_directory(args[i], flags, flag_count)){
+                        case 0:
+                            break;
+                        case 1:
+                            printf("error: %s: could not delete the directory (run with the -r flag to recursively delte the directory)\n", args[i]);
+                            break;
+                        case 2: 
+                            printf("error: %s: could not delete directory\n", args[i]);
+                            break;
+                    }
+
+            }  
             break;
         case CP:
             if (arg_count != 3)
                 puts("error: cp: command accepts exactly two arguments");
-            copy_file(args[1], args[2]);
+            if (copy_file(args[1], args[2]))
+                printf("error: %s: could not read the file\n", args[1]);
             break;
         case ECHO:
-            echo(args + 1, arg_count - 1);
+            int error = echo(args + 1, arg_count - 1);
+            switch (error){
+                case 0:
+                    break;
+                case 1:
+                    puts("error: echo: insertion operator missing right operand\n");
+                    break;
+                case 2:
+                    printf("error: cannot open file\n");
+                    break;
+            }
             break;
         case ECHOF:
             if (arg_count < 2)
                 puts("error: echof: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
-                    print_file(args[i]);
+                    if (print_file(args[i]))
+                        printf("error: %s: cannot read file\n", path);
             }
             break;
         case EXIT:

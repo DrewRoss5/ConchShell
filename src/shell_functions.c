@@ -37,10 +37,8 @@ int find_str(char* target, char** arr, int size){
 
 // changes the current working directory
 int change_dir(char* path){
-    if (chdir(path)){
-        printf("error: %s: directory not found\n", path);
+    if (chdir(path))
         return 1;
-    }
     return 0;
 }
 
@@ -48,10 +46,8 @@ int change_dir(char* path){
 int list_dir(char* path, char** flags, int flag_count){
     // open the file and ensure if it exists
     DIR* dir = opendir(path);
-    if (!dir){
-        printf("error: %s: directory could not be read\n", path);
+    if (!dir)
         return 1;
-    } 
     // determine if we're showing hidden directories
     int show_all = (find_str("-a", flags, flag_count) == -1) ? 0 : 1;
     // print the directory contents
@@ -75,39 +71,31 @@ int print_cwd(){
 // creates a new file if it does not already exist
 int create_file(char* path){
     FILE* out = fopen(path, "w");
-    if (!out){
-        printf("error: %s: cannot create file\n", path);
+    if (!out)
         return 1;
-    }
     fclose(out);
     return 0;
 }
 
 // creates a new directory if not already present
 int create_dir(char* path){
-    if (mkdir(path, 0777)){
-        printf("error: %s: cannot create directory\n", path);
+    if (mkdir(path, 0777))
         return 1;
-    }
     return 0;   
 }
 
 int delete_file(char* path){
-    if (remove(path)){
-        printf("error: %s: failed to delete the file, does it exist?\n", path);
+    if (remove(path))
         return 1;
-    }
-
+    return 0;
 }
 
 // prints the contents of a file
 int print_file(char* path){
     FILE* file = fopen(path, "r");
     // ensure the file can be read
-    if (!file){
-        printf("error: %s: cannot read file\n", path);
+    if (!file)     
         return 1;
-    }
     // print the file
     char buf[FILE_BUF_LEN];
     while (fgets(buf, FILE_BUF_LEN, file))
@@ -122,15 +110,13 @@ int delete_recusive(char* path){
     DIR* dir = opendir(path);
     struct dirent* file;
     char tmp[(2 * PATH_LEN) + 1];
-    if (!path){
-        printf("error: %s: could not delete file\n", path);
-        return 1;
-    }
+    if (!dir)
+        return 2;
     while((file = readdir(dir))){
         if (strcmp(file->d_name, ".") && strcmp(file->d_name, "..")){
             sprintf(tmp, "%s/%s", path, file->d_name);
             if (file->d_type == DT_DIR)
-                delete_recusive(tmp)
+                delete_recusive(tmp);
             else
                 delete_file(tmp);
         }
@@ -142,13 +128,12 @@ int delete_recusive(char* path){
 // deletes a directory, 
 int delete_directory(char* path, char** flags, int flag_count){
     if (find_str("-r", flags, flag_count) == -1){
-        if (rmdir(path)){
-            printf("error: %s: cannot delete the directory (run with the -r flag to delete contents)\n", path);
+        if (rmdir(path))
             return 1;
-        }
     }
     else
         return delete_recusive(path);
+    return 0;
 }
 
 // echos the proivded arguments
@@ -164,18 +149,14 @@ int echo(char** args, int arg_count){
     else{
         // echo the string to the provided file
         // ensure a file was provided
-        if (insert_pos == (arg_count - 1)){
-            puts("error: insertion operator missing right operand\n");
+        if (insert_pos == (arg_count - 1))
             return 1;
-        }
         else{
             // write the file contents
             char* path = args[insert_pos + 1];
             FILE* out = fopen(path, "w");
-            if (!file){
-                printf("error: %s: cannot open file\n", path)
-                return 1;
-            }
+            if (!out)  
+                return 2;
             for (int i = 0; i < insert_pos; i++)
                 fprintf(out, "%s ", args[i]);
             fclose(out);
@@ -191,7 +172,6 @@ int copy_file(char* src, char* dest){
     FILE* out_file = fopen(dest, "wb");
     // ensure both files are valid
     if (!in_file || !out_file){
-        printf("error: %s: could not read the file\n", src);
         return 1;
     }
     // get the size of the input file
