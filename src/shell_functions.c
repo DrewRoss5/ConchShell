@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <string.h>
-#include <errno.h>
 #include <dirent.h>
 #include "shell_functions.h"
 
@@ -191,10 +190,24 @@ int copy_file(char* src, char* dest){
     return 0;
 }
 
+// moves the contents of one file to another, and deletes the original
 int move_file(char* src, char* dest){
     if (copy_file(src, dest))
         return 1;
     if (delete_file(src))
         return 2;
+    return 0;
+}
+
+// prints the name and parameters of each command
+int print_help(){
+    char* commands[COMMAND_COUNT]= {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "clear", "help", "exit"};
+    char* arg_lists[COMMAND_COUNT] = {"(<directory>)", "<directory>", "", "<file name(s)>", "<directory name(s)>", "<file name(s)>", "<directory name(s)>", "<source> <destination>", "<source> <destination>", "<string> (> <file>)", "<file name(s)>", "", "", ""};
+    char* flag_lists[COMMAND_COUNT] = {"", "-a", "", "", "", "", "-r", "", "", "", "", "", "", ""};
+    puts("Available Commands:\n");
+    printf("\t%-10s %s      %s\n", "Name:", "Flags:", "Parameters:");
+    for (int i = 0; i < COMMAND_COUNT; i++)
+        printf("\t%-10s [%-5s]      %s\n", commands[i], flag_lists[i], arg_lists[i]);
+    puts("\nArguments in parentheses are optional.\nSee https://github.com/DrewRoss5/ConchShell/blob/main/README.md for more information");
     return 0;
 }

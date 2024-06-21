@@ -9,12 +9,11 @@
 #define MAX_ARGS 256
 #define MAX_FLAGS 256
 #define UNAME_LEN 32
-#define COMMAND_COUNT 13
 #define _GNU_SOURCE
 
-char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "clear", "exit"};
+char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "clear", "help", "exit"};
 
-enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, CLEAR, EXIT};
+enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, CLEAR, HELP, EXIT};
 
 // takes the string of user input and writes it as an array of arguments
 int parse_args(char* input, char** args){
@@ -173,11 +172,14 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                         printf("error: %s: cannot read file\n", path);
             }
             break;
-        case EXIT:
-            return 1;
         case CLEAR:
             system("clear");
             break;
+        case HELP:
+            print_help();
+            break;
+        case EXIT:
+            return 1;
         default:
             if (strcmp("", command))
                 printf("error: %s: unrecognized file or command\n", command);

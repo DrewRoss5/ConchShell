@@ -1,3 +1,5 @@
+#define COMMAND_COUNT 14
+
 typedef struct environment {
     char* cwd;
 } Env;
@@ -14,3 +16,4 @@ int print_file(char* path);
 int echo(char** args, int arg_count);
 int copy_file(char* src, char* dest);
 int move_file(char* src, char* dest);
+int print_help();
