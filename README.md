@@ -38,4 +38,6 @@ Once you have installed conch, simply call `conch` to enter the shell.
     - functions like the `echo` command in bash, including using ">" to output to files.
 - echof <path(s)>
   - prints the contents of the provided files. Much like `cat`.
+- help
+  - displays a list of all commands and their parameters
 - exit
