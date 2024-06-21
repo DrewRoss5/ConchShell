@@ -57,6 +57,7 @@ int list_dir(char* path, char** flags, int flag_count){
         if (file->d_name[0] != '.' || show_all)
             printf("\t\t%s\n", file->d_name);
     }
+    closedir(dir);
     return 0;
 }
 
@@ -122,6 +123,7 @@ int delete_recusive(char* path){
         }
     }
     rmdir(path);
+    closedir(dir);
     return 0;
 }
 
