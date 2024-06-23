@@ -30,8 +30,8 @@ Once you have installed conch, simply call `conch` to enter the shell.
   - Functions just like mkdir
 - del <path(s)>
   - Deletes the provided file(s)
-- rmdir \[-r] <path(s)>
-  - Deletes the provided directory(ies). Must be run with `-r` flag to delete non-empty directories.
+- rmdir \[-r -f] <path(s)>
+  - Deletes the provided directory(ies). Must be run with `-r` flag to delete non-empty directories. Run with the `-f` flag to prevent a prompt.
 - cp <source> <destination>
 - mv <source> <destination>
 - echo <argument(s)>
