@@ -15,6 +15,28 @@ char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "de
 
 enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, CLEAR, HELP, EXIT};
 
+// returns a pointer to the file to be written to, and overwrites arg_count if the redirection operator is present
+FILE* parse_redirect(char** args, int* arg_count){
+    int redirect_pos = -1;
+    for (int i = 0; i < *arg_count; i++){
+        if (!strcmp(args[i], ">")){
+            redirect_pos = i;
+            break;
+        }
+    }
+    if (redirect_pos == -1)
+        return stdout;
+    else{
+        *arg_count = redirect_pos;
+        if (!args[redirect_pos + 1]){
+            return NULL;
+        }
+        FILE* out = fopen(args[redirect_pos + 1], "w");
+        return out;
+    }
+}
+
+
 // takes the string of user input and writes it as an array of arguments
 int parse_args(char* input, char** args){
     size_t arg_count = 0;
@@ -50,7 +72,7 @@ int parse_flags(char** raw_args, char** args, char** flags, int arg_count){
 }
 
 // takes the arguments provided and runs the appropriate function
-int handle_command(char** raw_args, char** args, char** flags, int arg_count, int flag_count){
+int handle_command(char** raw_args, char** args, char** flags, int arg_count, int flag_count, FILE* out_file){
     // determine the command code
     char* command = args[0];
     size_t command_no = -1;
@@ -76,11 +98,11 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 getcwd(path, BUF_LEN);
             else
                 path = args[1];
-            if (list_dir(path, flags, flag_count))
+            if (list_dir(path, flags, flag_count, out_file))
                 printf("error: %s: directory could not be read\n", path);
             break;
         case CWD:
-            print_cwd();
+            print_cwd(out_file);
             break;
         case CREATE:
             if (arg_count < 2)
@@ -115,16 +137,21 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
             else{
                 for (int i = 1; i < arg_count; i++)
                     switch (delete_directory(args[i], flags, flag_count)){
-                        case 0:
+                        case OK:
                             break;
-                        case 1:
+                        case ERR_1:
                             printf("error: %s: could not delete the directory (run with the -r flag to recursively delte the directory)\n", args[i]);
                             break;
-                        case 2: 
+                        case ERR_2: 
                             printf("error: %s: could not delete directory\n", args[i]);
                             break;
+                        case ERR_3:
+                            puts("directory not deleted");
+                            break;
+                        case ERR_4:
+                            puts("unrecognized response");
+                            break;
                     }
-
             }  
             break;
         case CP:
@@ -140,35 +167,25 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 break;
             }
             switch (move_file(args[1], args[2])){
-                case 0:
+                case OK:
                     break;
-                case 1:
+                case ERR_1:
                     printf("error: %s: could not access file\n", args[1]);
                     break;
-                case 2:
+                case ERR_2:
                     printf("error: %s: could not delete source file\n", args[1]);
                     break;
             }
             break;
         case ECHO:
-            int error = echo(args + 1, arg_count - 1);
-            switch (error){
-                case 0:
-                    break;
-                case 1:
-                    puts("error: echo: insertion operator missing right operand\n");
-                    break;
-                case 2:
-                    printf("error: cannot open file\n");
-                    break;
-            }
+            echo(args + 1, arg_count - 1, out_file);
             break;
         case ECHOF:
             if (arg_count < 2)
                 puts("error: echof: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
-                    if (print_file(args[i]))
+                    if (print_file(args[i], out_file))
                         printf("error: %s: cannot read file\n", path);
             }
             break;
@@ -176,7 +193,7 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
             system("clear");
             break;
         case HELP:
-            print_help();
+            print_help(out_file);
             break;
         case EXIT:
             return 1;
@@ -203,9 +220,19 @@ void input_loop(){
     // parse the arguments and flags
     int flag_count = parse_flags(raw_args, args, flags, arg_count);
     arg_count -= flag_count;
-    int exit = handle_command(raw_args, args, flags, arg_count, flag_count);
-    if (!exit)
+    // parse the output file 
+    FILE* out_file = parse_redirect(args, &arg_count);
+    if (!out_file){
+        puts("Invalid output path!");
         input_loop();
+    }
+    else{
+        int exit = handle_command(raw_args, args, flags, arg_count, flag_count, out_file);
+        if (out_file != stdout)
+            fclose(out_file);
+        if (!exit)
+            input_loop();
+    }
 }
 
 // prevent escape with an interup

@@ -4,11 +4,15 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <dirent.h>
+#include <ctype.h>
 #include "shell_functions.h"
 
 #define PATH_LEN 256
 #define FILE_BUF_LEN 1024
-#define _GNU_S
+#define _GNU_SOURCE
+
+// empties stdin (this function is not strictly nessecary, but looks less ugly than calling the while loop in the function)
+void flush_stdin() {while (fgetc(stdin) != '\n');}
 
 // this will be used for future features
 // returns true if dir contains file, otherwise, false
@@ -17,9 +21,9 @@ int file_exists(char* dir_name, char* file_name){
     struct dirent* file;
     while((file = readdir(d))){
         if (!strcmp(file->d_name, file_name))
-            return 1;
+            return ERR_1;
     }
-    return 0;
+    return OK;
 }
 
 // returns the position of the first instance of a particular string in an array of strings. Or -1 if it's not present
@@ -37,72 +41,71 @@ int find_str(char* target, char** arr, int size){
 // changes the current working directory
 int change_dir(char* path){
     if (chdir(path))
-        return 1;
-    return 0;
+        return ERR_1;
+    return OK;
 }
 
 // runs the LS command
-int list_dir(char* path, char** flags, int flag_count){
+int list_dir(char* path, char** flags, int flag_count, FILE* out_file){
     // open the file and ensure if it exists
     DIR* dir = opendir(path);
     if (!dir)
-        return 1;
+        return ERR_1;
     // determine if we're showing hidden directories
     int show_all = (find_str("-a", flags, flag_count) == -1) ? 0 : 1;
     // print the directory contents
     struct dirent* file;
-    printf("\t%s:\n", path);
+    fprintf(out_file, "\t%s:\n", path);
     while ((file = readdir(dir))){
         if (file->d_name[0] != '.' || show_all)
-            printf("\t\t%s\n", file->d_name);
+            fprintf(out_file, "\t\t%s\n", file->d_name);
     }
     closedir(dir);
-    return 0;
+    return OK;
 }
 
 // displays the current working directory
-int print_cwd(){
+int print_cwd(FILE* out_file){
     char cwd[PATH_LEN];
     getcwd(cwd, PATH_LEN);
-    printf("%s\n", cwd);
-    return 0;
+    fprintf(out_file, "%s\n", cwd);
+    return OK;
 }
 
 // creates a new file if it does not already exist
 int create_file(char* path){
     FILE* out = fopen(path, "w");
     if (!out)
-        return 1;
+        return ERR_1;
     fclose(out);
-    return 0;
+    return OK;
 }
 
 // creates a new directory if not already present
 int create_dir(char* path){
     if (mkdir(path, 0777))
-        return 1;
-    return 0;   
+        return ERR_1;
+    return OK;   
 }
 
 int delete_file(char* path){
     if (remove(path))
-        return 1;
-    return 0;
+        return ERR_1;
+    return OK;
 }
 
 // prints the contents of a file
-int print_file(char* path){
+int print_file(char* path, FILE* out_file){
     FILE* file = fopen(path, "r");
     // ensure the file can be read
     if (!file)     
-        return 1;
+        return ERR_1;
     // print the file
     char buf[FILE_BUF_LEN];
     while (fgets(buf, FILE_BUF_LEN, file))
-        printf("%s", buf);
-    puts("");   
+        fprintf(out_file, "%s", buf);
     fclose(file);
-    return 0;
+    return OK;
 }
 
 // recursively deletes a directory and children
@@ -111,7 +114,7 @@ int delete_recusive(char* path){
     struct dirent* file;
     char tmp[(2 * PATH_LEN) + 1];
     if (!dir)
-        return 2;
+        return ERR_2;
     while((file = readdir(dir))){
         if (strcmp(file->d_name, ".") && strcmp(file->d_name, "..")){
             sprintf(tmp, "%s/%s", path, file->d_name);
@@ -123,47 +126,41 @@ int delete_recusive(char* path){
     }
     rmdir(path);
     closedir(dir);
-    return 0;
+    return OK;
 }
 
 // deletes a directory, 
 int delete_directory(char* path, char** flags, int flag_count){
     if (find_str("-r", flags, flag_count) == -1){
         if (rmdir(path))
-            return 1;
+            return ERR_1;
     }
-    else
-        return delete_recusive(path);
-    return 0;
+    else{
+        // check if the user has overriden the warning
+        if (find_str("-f", flags, flag_count) == -1){
+            printf("Are you sure you would like to delete %s?\nThis will irrevocably delete the contents of the directory. (y/n)\n", path);
+            char response = (char) tolower(fgetc(stdin));
+            flush_stdin();
+            if (response == 'y')
+                 return delete_recusive(path);
+            else if (response == 'n')
+                return ERR_3;
+            else
+                return ERR_4;
+        }
+        else 
+            return delete_recusive(path);
+    }  
+    return OK;
 }
 
 // echos the proivded arguments
-int echo(char** args, int arg_count){
-    // determine if the command should echo to a file or stdout
-    int insert_pos = find_str(">", args, arg_count);
-    if (insert_pos == -1){
-        // echo the string to stdout
-        for (int i = 0; i < arg_count; i++)
-            printf("%s ", args[i]);
-        puts("");
-    }
-    else{
-        // echo the string to the provided file
-        // ensure a file was provided
-        if (insert_pos == (arg_count - 1))
-            return 1;
-        else{
-            // write the file contents
-            char* path = args[insert_pos + 1];
-            FILE* out = fopen(path, "w");
-            if (!out)  
-                return 2;
-            for (int i = 0; i < insert_pos; i++)
-                fprintf(out, "%s ", args[i]);
-            fclose(out);
-        }
-    }
-    return 0;
+int echo(char** args, int arg_count, FILE* out_file){
+    // echo the string to stdout
+    for (int i = 0; i < arg_count; i++)
+        fprintf(out_file, "%s ", args[i]);
+    fprintf(out_file, "\n");
+    return OK;
 }
 
 // copies the contents of a file to another destination
@@ -173,7 +170,7 @@ int copy_file(char* src, char* dest){
     FILE* out_file = fopen(dest, "wb");
     // ensure both files are valid
     if (!in_file || !out_file){
-        return 1;
+        return ERR_1;
     }
     // get the size of the input file
     fseek(in_file, 0L, SEEK_END);
@@ -187,27 +184,27 @@ int copy_file(char* src, char* dest){
     free(buf);
     fclose(in_file);
     fclose(out_file);
-    return 0;
+    return OK;
 }
 
 // moves the contents of one file to another, and deletes the original
 int move_file(char* src, char* dest){
     if (copy_file(src, dest))
-        return 1;
+        return ERR_1;
     if (delete_file(src))
-        return 2;
-    return 0;
+        return ERR_2;
+    return OK;
 }
 
 // prints the name and parameters of each command
-int print_help(){
+int print_help(FILE* out_file){
     char* commands[COMMAND_COUNT]= {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "clear", "help", "exit"};
     char* arg_lists[COMMAND_COUNT] = {"(<directory>)", "<directory>", "", "<file name(s)>", "<directory name(s)>", "<file name(s)>", "<directory name(s)>", "<source> <destination>", "<source> <destination>", "<string> (> <file>)", "<file name(s)>", "", "", ""};
-    char* flag_lists[COMMAND_COUNT] = {"", "-a", "", "", "", "", "-r", "", "", "", "", "", "", ""};
-    puts("Available Commands:\n");
-    printf("\t%-10s %s      %s\n", "Name:", "Flags:", "Parameters:");
+    char* flag_lists[COMMAND_COUNT] = {"", "-a", "", "", "", "", "-r, -f", "", "", "", "", "", "", ""};
+    fprintf(out_file, "Available Commands:\n\n");
+    fprintf(out_file, "\t%-10s %-10s   %s\n", "Name:", "Flags:", "Parameters:");
     for (int i = 0; i < COMMAND_COUNT; i++)
-        printf("\t%-10s [%-5s]      %s\n", commands[i], flag_lists[i], arg_lists[i]);
-    puts("\nArguments in parentheses are optional.\nSee https://github.com/DrewRoss5/ConchShell/blob/main/README.md for more information");
-    return 0;
+        fprintf(out_file, "\t%-10s [%-10s]   %s\n", commands[i], flag_lists[i], arg_lists[i]);
+    fprintf(out_file, "\nArguments in parentheses are optional.\nSee https://github.com/DrewRoss5/ConchShell/blob/main/README.md for more information\n");
+    return OK;
 }
