@@ -94,13 +94,17 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 printf("error: %s: directory not found\n", path);
             break;
         case LS:
-            if (arg_count == 1)
-                getcwd(path, BUF_LEN);
-            else
-                path = args[1];
-            if (list_dir(path, flags, flag_count, out_file))
-                printf("error: %s: directory could not be read\n", path);
-            break;
+            int result;
+            if (arg_count > 1)
+                result = list_dir(args[1], flags, flag_count, out_file);
+            else{
+                char cwd[BUF_LEN];
+                getcwd(cwd, BUF_LEN);
+                result = list_dir(cwd, flags, flag_count, out_file);
+            }
+            if (result)
+                puts("error: ls: could not list the provided directory");
+            break;           
         case CWD:
             print_cwd(out_file);
             break;
@@ -198,7 +202,7 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
         case EXIT:
             return 1;
         default:
-            if (strcmp("", command))
+            if (strcmp("", command) && strcmp("test", command))
                 printf("error: %s: unrecognized file or command\n", command);
             break;
     }

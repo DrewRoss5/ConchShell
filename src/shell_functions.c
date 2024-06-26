@@ -47,18 +47,16 @@ int change_dir(char* path){
 
 // runs the LS command
 int list_dir(char* path, char** flags, int flag_count, FILE* out_file){
-    // open the file and ensure if it exists
+    // determine if hiddent directoies should be shown
+    int show_all = (find_str("-a", flags, flag_count) == -1) ? 0 : 1;
+    // list the directory
+    struct dirent* entry;
     DIR* dir = opendir(path);
     if (!dir)
         return ERR_1;
-    // determine if we're showing hidden directories
-    int show_all = (find_str("-a", flags, flag_count) == -1) ? 0 : 1;
-    // print the directory contents
-    struct dirent* file;
-    fprintf(out_file, "\t%s:\n", path);
-    while ((file = readdir(dir))){
-        if (file->d_name[0] != '.' || show_all)
-            fprintf(out_file, "\t\t%s\n", file->d_name);
+    while ((entry = readdir(dir)) != NULL){
+        if (entry->d_name[0] != '.' || show_all)
+            fprintf(out_file, "%s\n", entry->d_name);
     }
     closedir(dir);
     return OK;
