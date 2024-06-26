@@ -83,27 +83,24 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
         }
     }
     // run the appropriate command
+    char path[BUF_LEN];
     switch (command_no){
         case CD:
-            char* path;
             if (arg_count == 1)
-                asprintf(&path, "/home/%s/", getlogin());
+                sprintf(path, "/home/%s/", getlogin());
             else
-                path = args[1];
+                strcpy(path, args[1]);
             if (change_dir(path))
                 printf("error: %s: directory not found\n", path);
             break;
         case LS:
             int result;
             if (arg_count > 1)
-                result = list_dir(args[1], flags, flag_count, out_file);
-            else{
-                char cwd[BUF_LEN];
-                getcwd(cwd, BUF_LEN);
-                result = list_dir(cwd, flags, flag_count, out_file);
-            }
-            if (result)
-                puts("error: ls: could not list the provided directory");
+                strcpy(path, args[1]);
+            else
+                getcwd(path, BUF_LEN);
+            if (list_dir(path, flags, flag_count, out_file))
+                printf("error: %s: could not list the provided directory (does it exist?)\n", path);
             break;           
         case CWD:
             print_cwd(out_file);
