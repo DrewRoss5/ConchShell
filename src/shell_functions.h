@@ -3,7 +3,7 @@
 
 #define COMMAND_COUNT 15
 
-enum return_vals{OK=0, ERR_1, ERR_2, ERR_3, ERR_4, FLAG_ERR = 10, FLAG_COUNT_ERR};
+enum return_vals{OK=0, ERR_1, ERR_2, ERR_3, ERR_4, FLAG_ERR = 10, INVALID_BIN_ERR = 32512};
 
 int find_str(char* target, char** arr, int size);
 int file_exists(char* dir_name, char* file_name);
@@ -19,6 +19,6 @@ int echo(char** args, int arg_count, FILE* out_file);
 int copy_file(char* src, char* dest);
 int move_file(char* src, char* dest);
 int print_help(FILE* out_file);
-int exec_bin(char* bin_path, FILE* out_file);
+int exec_bin(char* bin_path, char** argv, int argc, FILE* out_file);
 
 #endif

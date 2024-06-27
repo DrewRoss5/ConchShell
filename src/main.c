@@ -244,7 +244,7 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
             if (arg_count < 2)
                 puts("error: run: please provide a binary path");
             else{
-                if (exec_bin(args[1], out_file) != OK)
+                if (exec_bin(args[1], raw_args + 1, raw_arg_count - 2, out_file) != OK)
                     printf("error: %s: unrecognized command", args[1]);
             }
             break;
@@ -263,9 +263,18 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
                 break;
             return 1;
         default:
-            if (strcmp("", command) && strcmp("test", command)){
-                if (exec_bin(command, out_file) != OK)
-                    printf("error: %s: exited with failing code\n", command);
+            if (strcmp("", command) && strcmp("test", command)){    
+                switch (exec_bin(args[1], raw_args, raw_arg_count - 1, out_file)){
+                    case OK:
+                        break;
+                    case INVALID_BIN_ERR:
+                        printf("error: %s: unrecognized file or command\n", command);
+                        break;
+                    default:
+                        printf("error: %s: exited with failing code\n", command);
+                        break;
+
+                }
             }
             break;
     }

@@ -210,14 +210,21 @@ int print_help(FILE* out_file){
 }
 
 // runs a binary, piping it's output and input to this shell
-int exec_bin(char* bin_path, FILE* out_file){
+int exec_bin(char* bin_path, char** argv, int argc, FILE* out_file){
+    // read the arguments as well as the binary
+    char command[COMMAND_STR_LEN];
+    sprintf(command, "%s", argv[0]);
+    for (int i = 1; i < argc; i++){
+        sprintf(command + strlen(command), " %s", argv[i]);
+    }
     // validate the file can be opened exists
     FILE* file_ptr;
-    if ((file_ptr = popen(bin_path, "r")) == NULL)
-        return ERR_1;
+    if ((file_ptr = popen(command, "r")) == NULL)
+        return INVALID_BIN_ERR;
     // read the output of the process
     char buf[FILE_BUF_LEN];
     while (fgets(buf, FILE_BUF_LEN, file_ptr))
         fprintf(out_file, "%s", buf);
-    return pclose(file_ptr);
+    int result = pclose(file_ptr);
+    return result;
 }
