@@ -2,8 +2,6 @@
 A Linux shell written in C, written as a hobbyist project
 
 # Roadmap/ToDo:
-- Make commands ensure that all provided flags are valid
-  - Currently, invalid flags are silently ignored
 - Allow running external executables
 - Add a config file
 - Add support for aliases
