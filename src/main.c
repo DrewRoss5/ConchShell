@@ -11,9 +11,32 @@
 #define UNAME_LEN 32
 #define _GNU_SOURCE
 
+// associate all commands with their respective flags (if they have any)
+char* ls_flags[1] = {"-a"};
+char* rmdir_flags[2] = {"-r", "-f"};
+
 char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "clear", "help", "exit"};
 
 enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, CLEAR, HELP, EXIT};
+
+// ensures that all flags for a given command are correct
+// TODO: Find if there is a way to do this that's more efficient than O(n^2)
+int validate_flags(char* command_name, char** valid, int valid_count, char** provided, int provided_count){
+    for (int i = 0; i < provided_count; i++){
+        int valid_flag = 0;
+        for (int j = 0; j < valid_count; j++){
+            if (strcmp(valid[j], provided[i]) == 0){
+                valid_flag = 1;
+                break;
+            }
+        }
+        if (!valid_flag){
+            printf("error: %s: unrecognized flag %s\n", command_name, provided[i]);
+            return FLAG_ERR;
+        }
+    }
+    return OK;
+}
 
 // returns a pointer to the file to be written to, and overwrites arg_count if the redirection operator is present
 FILE* parse_redirect(char** args, int* arg_count){
@@ -84,28 +107,41 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
     }
     // run the appropriate command
     char path[BUF_LEN];
+    char* valid_flags;
     switch (command_no){
         case CD:
+            if (validate_flags("cd", NULL, 0, flags,flag_count))
+                break;
+            // determine which directory to switch to
             if (arg_count == 1)
                 sprintf(path, "/home/%s/", getlogin());
             else
                 strcpy(path, args[1]);
+            // change the directory, or display an error if we failed
             if (change_dir(path))
                 printf("error: %s: directory not found\n", path);
             break;
         case LS:
-            int result;
+            // validate the provided flags
+            if (validate_flags("ls", ls_flags, 1, flags,flag_count))
+                break;
+            // determine the directory to list
             if (arg_count > 1)
                 strcpy(path, args[1]);
             else
                 getcwd(path, BUF_LEN);
+            // list the directory's contents
             if (list_dir(path, flags, flag_count, out_file))
                 printf("error: %s: could not list the provided directory (does it exist?)\n", path);
             break;           
         case CWD:
+            if (validate_flags("cwd", NULL, 0, flags, flag_count))
+                break;
             print_cwd(out_file);
             break;
         case CREATE:
+            if (validate_flags("create", NULL, 0, flags, flag_count))
+                break;
             if (arg_count < 2)
                 puts("error: create: please provide a file opperand");
             else{
@@ -115,6 +151,8 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
             }
             break;
         case CREATE_D:
+            if (validate_flags("created", NULL, 0, flags, flag_count))
+                break;
             if (arg_count < 2)
                 puts("error: created: please provide a directory opperand");
             else{
@@ -124,6 +162,8 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
             }
             break;
         case DEL:
+            if (validate_flags("del", NULL, 0, flags, flag_count))
+                break;
             if (arg_count < 2)
                 puts("error: del: please provide a file opperand");
             else{
@@ -133,6 +173,8 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
             }
             break;
         case RMDIR:
+            if (validate_flags("rmdir", rmdir_flags, 2, flags, flag_count))
+                break;
             if (arg_count < 2)
                 puts("error: rmdir: please provide a path operand");
             else{
@@ -156,6 +198,8 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
             }  
             break;
         case CP:
+            if (validate_flags("cp", NULL, 0, flags, flag_count))
+                break;
             if (arg_count != 3)
                 puts("error: cp: command accepts exactly two arguments");
                 break;
@@ -163,6 +207,8 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 printf("error: %s: could not read the file\n", args[1]);
             break;
         case MV:
+            if (validate_flags("mv", NULL, 0, flags, flag_count))
+                break;
             if (arg_count != 3){
                 puts("error: mv: command accepts exactly two arguments");
                 break;
@@ -179,9 +225,13 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
             }
             break;
         case ECHO:
+            if (validate_flags("echo", NULL, 0, flags, flag_count))
+                break;
             echo(args + 1, arg_count - 1, out_file);
             break;
         case ECHOF:
+            if (validate_flags("echof", NULL, 0, flags, flag_count))
+                break;
             if (arg_count < 2)
                 puts("error: echof: please provide a file opperand");
             else{
@@ -191,12 +241,18 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
             }
             break;
         case CLEAR:
+            if (validate_flags("clear", NULL, 0, flags, flag_count))
+                break;
             system("clear");
             break;
         case HELP:
+            if (validate_flags("help", NULL, 0, flags, flag_count))
+                break;
             print_help(out_file);
             break;
         case EXIT:
+            if (validate_flags("exit", NULL, 0, flags, flag_count))
+                break;
             return 1;
         default:
             if (strcmp("", command) && strcmp("test", command))

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <ctype.h>
+#include <errno.h>
 #include "shell_functions.h"
 
 #define PATH_LEN 256
