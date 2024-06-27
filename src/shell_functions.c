@@ -212,7 +212,7 @@ int print_help(FILE* out_file){
 // runs a binary, piping it's output and input to this shell
 int exec_bin(char* bin_path, char** argv, int argc, FILE* out_file){
     // read the arguments as well as the binary
-    char command[COMMAND_STR_LEN];
+    char* command = (char*) malloc(sizeof(char*) * argc);
     sprintf(command, "%s", argv[0]);
     for (int i = 1; i < argc; i++){
         sprintf(command + strlen(command), " %s", argv[i]);
@@ -226,5 +226,6 @@ int exec_bin(char* bin_path, char** argv, int argc, FILE* out_file){
     while (fgets(buf, FILE_BUF_LEN, file_ptr))
         fprintf(out_file, "%s", buf);
     int result = pclose(file_ptr);
+    free(command);
     return result;
 }
