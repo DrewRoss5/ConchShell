@@ -3,7 +3,7 @@ A Linux shell written in C, written as a hobbyist project
 
 # Roadmap/ToDo:
 - Finish implementing running executables
-  - Allow executables to be called without explicitly using the "run" command
+  - ~~Allow executables to be called without explicitly using the "run" command~~
   - Allow passing arguments
   - Improve support for intereactive applications
 - Add a config file
