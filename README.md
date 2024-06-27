@@ -33,7 +33,7 @@ Once you have installed conch, simply call `conch` to enter the shell.
 - cp <source> <destination>
 - mv <source> <destination>
 - echo <argument(s)>
-    - functions like the `echo` command in bash, including using ">" to output to files.
+    - functions like the `echo` command in bash
 - echof <path(s)>
   - prints the contents of the provided files. Much like `cat`.
 - help
