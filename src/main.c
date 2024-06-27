@@ -15,9 +15,9 @@
 char* ls_flags[1] = {"-a"};
 char* rmdir_flags[2] = {"-r", "-f"};
 
-char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "clear", "help", "exit"};
+char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "run", "clear", "help", "exit"};
 
-enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, CLEAR, HELP, EXIT};
+enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, RUN, CLEAR, HELP, EXIT};
 
 // ensures that all flags for a given command are correct
 // TODO: Find if there is a way to do this that's more efficient than O(n^2)
@@ -95,7 +95,7 @@ int parse_flags(char** raw_args, char** args, char** flags, int arg_count){
 }
 
 // takes the arguments provided and runs the appropriate function
-int handle_command(char** raw_args, char** args, char** flags, int arg_count, int flag_count, FILE* out_file){
+int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count, int arg_count, int flag_count, FILE* out_file){
     // determine the command code
     char* command = args[0];
     size_t command_no = -1;
@@ -240,6 +240,14 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                         printf("error: %s: cannot read file\n", path);
             }
             break;
+        case RUN:
+            if (arg_count < 2)
+                puts("error: run: please provide a binary path");
+            else{
+                if (exec_bin(args[1], out_file) != OK)
+                    printf("error: %s: unrecognized command", args[1]);
+            }
+            break;
         case CLEAR:
             if (validate_flags("clear", NULL, 0, flags, flag_count))
                 break;
@@ -255,8 +263,10 @@ int handle_command(char** raw_args, char** args, char** flags, int arg_count, in
                 break;
             return 1;
         default:
-            if (strcmp("", command) && strcmp("test", command))
-                printf("error: %s: unrecognized file or command\n", command);
+            if (strcmp("", command) && strcmp("test", command)){
+                if (exec_bin(command, out_file) != OK)
+                    printf("error: %s: exited with failing code\n", command);
+            }
             break;
     }
     return 0;
@@ -273,18 +283,21 @@ void input_loop(){
     // get the user's arguments and strip the newline
     fgets(input, BUF_LEN, stdin);
     input[strlen(input) - 1] = 0;
-    int arg_count = parse_args(input, raw_args);
+    int raw_arg_count = parse_args(input, raw_args);
     // parse the arguments and flags
-    int flag_count = parse_flags(raw_args, args, flags, arg_count);
-    arg_count -= flag_count;
+    int flag_count = parse_flags(raw_args, args, flags, raw_arg_count);
+    int arg_count = raw_arg_count - flag_count;
     // parse the output file 
     FILE* out_file = parse_redirect(args, &arg_count);
+    // remove the output file from the raw args if provdied
+    if (out_file != stdin)
+        raw_arg_count -= find_str(">", raw_args, raw_arg_count);
     if (!out_file){
         puts("Invalid output path!");
         input_loop();
     }
     else{
-        int exit = handle_command(raw_args, args, flags, arg_count, flag_count, out_file);
+        int exit = handle_command(raw_args, args, flags, raw_arg_count, arg_count, flag_count, out_file);
         if (out_file != stdout)
             fclose(out_file);
         if (!exit)

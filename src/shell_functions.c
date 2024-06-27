@@ -10,6 +10,7 @@
 
 #define PATH_LEN 256
 #define FILE_BUF_LEN 1024
+#define COMMAND_STR_LEN 1024000
 #define _GNU_SOURCE
 
 // empties stdin (this function is not strictly nessecary, but looks less ugly than calling the while loop in the function)
@@ -206,4 +207,17 @@ int print_help(FILE* out_file){
         fprintf(out_file, "\t%-10s [%-10s]   %s\n", commands[i], flag_lists[i], arg_lists[i]);
     fprintf(out_file, "\nArguments in parentheses are optional.\nSee https://github.com/DrewRoss5/ConchShell/blob/main/README.md for more information\n");
     return OK;
+}
+
+// runs a binary, piping it's output and input to this shell
+int exec_bin(char* bin_path, FILE* out_file){
+    // validate the file can be opened exists
+    FILE* file_ptr;
+    if ((file_ptr = popen(bin_path, "r")) == NULL)
+        return ERR_1;
+    // read the output of the process
+    char buf[FILE_BUF_LEN];
+    while (fgets(buf, FILE_BUF_LEN, file_ptr))
+        fprintf(out_file, "%s", buf);
+    return pclose(file_ptr);
 }
