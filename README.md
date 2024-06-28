@@ -40,6 +40,8 @@ Once you have installed conch, simply call `conch` to enter the shell.
     - functions like the `echo` command in bash
 - echof <path(s)>
   - prints the contents of the provided files. Much like `cat`.
+- history
+    - prints the contents of the shell history
 - run <command(s)>
   - runs a binary and displays its stdout output, includes binaries in any `PATH` directories.
   - NOTES: As of 06/27/2024, this does not completely work with interactive applications.
