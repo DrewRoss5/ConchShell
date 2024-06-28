@@ -8,6 +8,7 @@
 #define BUF_LEN 1024
 #define MAX_ARGS 256
 #define MAX_FLAGS 256
+#define PATH_LEN 256
 #define UNAME_LEN 32
 #define _GNU_SOURCE
 
@@ -278,7 +279,18 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
             }
             break;
     }
-    return 0;
+    return OK;
+}
+
+// strips a path to its basename
+char* basename(char* path){
+    int pos = 0;
+    size_t path_len = strlen(path);
+    for (int i = 0; i < path_len; i++){
+        if (path[i] == '/')
+            pos = i;
+    }
+    return path + pos;
 }
 
 // recieves and processes user input, then handles the given command
@@ -288,7 +300,11 @@ void input_loop(){
     char* args[MAX_ARGS];
     char* flags[MAX_FLAGS];
     char uname[UNAME_LEN];
-    printf("%s > ", getlogin());
+    // display the prompt
+    char* path = (char*) malloc(PATH_LEN);
+    getcwd(path, PATH_LEN);
+    printf("%s|..%s > ", getlogin(), basename(path));
+    free(path);
     // get the user's arguments and strip the newline
     fgets(input, BUF_LEN, stdin);
     input[strlen(input) - 1] = 0;
