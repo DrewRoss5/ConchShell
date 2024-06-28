@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include "shell_functions.h"
 
 #define BUF_LEN 1024
@@ -10,15 +12,16 @@
 #define MAX_FLAGS 256
 #define PATH_LEN 256
 #define UNAME_LEN 32
+#define CONCH_PATH_LEN 39
 #define _GNU_SOURCE
 
 // associate all commands with their respective flags (if they have any)
 char* ls_flags[1] = {"-a"};
 char* rmdir_flags[2] = {"-r", "-f"};
 
-char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "run", "clear", "help", "exit"};
+char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "run", "history", "clear", "help", "exit"};
 
-enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, RUN, CLEAR, HELP, EXIT};
+enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, RUN, HISTORY, CLEAR, HELP, EXIT};
 
 // ensures that all flags for a given command are correct
 // TODO: Find if there is a way to do this that's more efficient than O(n^2)
@@ -249,6 +252,10 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
                     printf("error: %s: unrecognized command", args[1]);
             }
             break;
+        case HISTORY:       
+            if (print_history(out_file) != OK)
+                puts("error: history: the history file could not be read.");
+            break;
         case CLEAR:
             if (validate_flags("clear", NULL, 0, flags, flag_count))
                 break;
@@ -294,7 +301,7 @@ char* basename(char* path){
 }
 
 // recieves and processes user input, then handles the given command
-void input_loop(){
+void input_loop(FILE* history_file){
     char input[BUF_LEN];
     char* raw_args[MAX_ARGS];
     char* args[MAX_ARGS];
@@ -307,6 +314,7 @@ void input_loop(){
     free(path);
     // get the user's arguments and strip the newline
     fgets(input, BUF_LEN, stdin);
+    fprintf(history_file, "%s", input);
     input[strlen(input) - 1] = 0;
     int raw_arg_count = parse_args(input, raw_args);
     // parse the arguments and flags
@@ -319,14 +327,14 @@ void input_loop(){
         raw_arg_count -= find_str(">", raw_args, raw_arg_count);
     if (!out_file){
         puts("Invalid output path!");
-        input_loop();
+        input_loop(history_file);
     }
     else{
         int exit = handle_command(raw_args, args, flags, raw_arg_count, arg_count, flag_count, out_file);
         if (out_file != stdout)
             fclose(out_file);
         if (!exit)
-            input_loop();
+            input_loop(history_file);
     }
 }
 
@@ -336,8 +344,29 @@ void interupt_handler (int _){
 }
 
 int main(){
+    // check if a conch directory already exists, and create one if not
+    int first_run = 0;
+    char conch_path[CONCH_PATH_LEN];
+    sprintf(conch_path, "/home/%s/.conch", getlogin());
+    DIR* conch_dir = opendir(conch_path);
+    if (!conch_dir){
+        first_run = 1;
+        puts("Welcome to the Conch Shell!");
+        mkdir(conch_path, 0777);
+        conch_dir = opendir(conch_path);
+    }
+    // open the history file
+    char tmp[BUF_LEN];
+    sprintf(tmp, "%s/history", conch_path);
+    FILE* history_f= fopen(tmp, "a+");
+    // interupt signals
     signal(SIGINT, interupt_handler);
     signal(SIGTSTP, interupt_handler);
+    // start the shell
     system("clear");
-    input_loop();
+    if (first_run)
+        puts("Welcome to the Conch Shell!");
+    input_loop(history_f);
+    fclose(history_f);
+    closedir(conch_dir);
 }

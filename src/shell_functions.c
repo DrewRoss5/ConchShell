@@ -214,9 +214,8 @@ int exec_bin(char* bin_path, char** argv, int argc, FILE* out_file){
     // read the arguments as well as the binary
     char* command = (char*) malloc(sizeof(char*) * argc);
     sprintf(command, "%s", argv[0]);
-    for (int i = 1; i < argc; i++){
+    for (int i = 1; i < argc; i++)
         sprintf(command + strlen(command), " %s", argv[i]);
-    }
     // validate the file can be opened exists
     FILE* file_ptr;
     if ((file_ptr = popen(command, "r")) == NULL)
@@ -228,4 +227,20 @@ int exec_bin(char* bin_path, char** argv, int argc, FILE* out_file){
     int result = pclose(file_ptr);
     free(command);
     return result;
+}
+
+// prints the current contents of the history file, returns ERR_1 if the history file cannot be opened for reading
+int print_history(FILE* out_file){
+    // open the file 
+    char history_path[PATH_LEN];
+    sprintf(history_path, "/home/%s/.conch/history", getlogin());
+    FILE* history_file = fopen(history_path, "r");
+    if (!history_file)
+        return ERR_1;
+    // print the contents of the file
+    char tmp[FILE_BUF_LEN];
+    int line_no = 0;
+    while (fgets(tmp, FILE_BUF_LEN, history_file))
+        printf("%d: %s", ++line_no, tmp);
+    return OK;
 }

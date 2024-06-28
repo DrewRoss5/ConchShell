@@ -1,7 +1,7 @@
 #ifndef SHELL_FUNCTIONS_H
 #define SHELL_FUNCTIONS_H
 
-#define COMMAND_COUNT 15
+#define COMMAND_COUNT 16
 
 enum return_vals{OK=0, ERR_1, ERR_2, ERR_3, ERR_4, FLAG_ERR = 10, INVALID_BIN_ERR = 32512};
 
@@ -20,5 +20,6 @@ int copy_file(char* src, char* dest);
 int move_file(char* src, char* dest);
 int print_help(FILE* out_file);
 int exec_bin(char* bin_path, char** argv, int argc, FILE* out_file);
+int print_history(FILE* out_file);
 
 #endif
