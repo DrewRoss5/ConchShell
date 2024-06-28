@@ -198,9 +198,9 @@ int move_file(char* src, char* dest){
 
 // prints the name and parameters of each command
 int print_help(FILE* out_file){
-    char* commands[COMMAND_COUNT]= {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "clear", "help", "exit"};
-    char* arg_lists[COMMAND_COUNT] = {"(<directory>)", "<directory>", "", "<file name(s)>", "<directory name(s)>", "<file name(s)>", "<directory name(s)>", "<source> <destination>", "<source> <destination>", "<string> (> <file>)", "<file name(s)>", "", "", ""};
-    char* flag_lists[COMMAND_COUNT] = {"", "-a", "", "", "", "", "-r, -f", "", "", "", "", "", "", ""};
+    char* commands[COMMAND_COUNT]= {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "clear", "run", "history", "help", "exit"};
+    char* arg_lists[COMMAND_COUNT] = {"(<directory>)", "<directory>", "", "<file name(s)>", "<directory name(s)>", "<file name(s)>", "<directory name(s)>", "<source> <destination>", "<source> <destination>", "<string>", "<file name(s)>", "", "<binary path>", "", "" "", ""};
+    char* flag_lists[COMMAND_COUNT] = {"", "-a", "", "", "", "", "-r, -f", "", "", "", "", "", "", "", "", ""};
     fprintf(out_file, "Available Commands:\n\n");
     fprintf(out_file, "\t%-10s %-10s   %s\n", "Name:", "Flags:", "Parameters:");
     for (int i = 0; i < COMMAND_COUNT; i++)
