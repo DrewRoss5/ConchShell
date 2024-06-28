@@ -4,7 +4,7 @@ A Linux shell written in C, written as a hobbyist project
 # Roadmap/ToDo:
 - Finish implementing running executables
   - ~~Allow executables to be called without explicitly using the "run" command~~
-  - Allow passing arguments
+  - ~~Allow passing arguments~~
   - Improve support for intereactive applications
 - Add a config file
 - Add support for aliases
@@ -41,7 +41,7 @@ Once you have installed conch, simply call `conch` to enter the shell.
   - prints the contents of the provided files. Much like `cat`.
 - run <command(s)>
   - runs a binary and displays its stdout output, includes binaries in any `PATH` directories.
-  - NOTES: As of 06/27/2024, this does not pass arguments to the command, and does not completely work with interactive applications.
+  - NOTES: As of 06/27/2024, this does not completely work with interactive applications.
 - help
   - displays a list of all commands and their parameters
 - exit
