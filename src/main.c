@@ -187,7 +187,7 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
                         case OK:
                             break;
                         case ERR_1:
-                            printf("error: %s: could not delete the directory (run with the -r flag to recursively delte the directory)\n", args[i]);
+                            printf("error: %s: could not delete the directory (run with the -r flag to recursively delete the directory)\n", args[i]);
                             break;
                         case ERR_2: 
                             printf("error: %s: could not delete directory\n", args[i]);
