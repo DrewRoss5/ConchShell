@@ -6,7 +6,6 @@ A Linux shell written in C, written as a hobbyist project
   - ~~Allow executables to be called without explicitly using the "run" command~~
   - ~~Allow passing arguments~~
   - Improve support for intereactive applications
-- Add command line history
 - Add a config file
 - Add support for aliases
 - Add background tasks
