@@ -356,9 +356,9 @@ int main(){
         conch_dir = opendir(conch_path);
     }
     // open the history file
-    char tmp[BUF_LEN];
-    sprintf(tmp, "%s/history", conch_path);
-    FILE* history_f= fopen(tmp, "a+");
+    char hist_path[BUF_LEN];
+    sprintf(hist_path, "%s/history", conch_path);
+    FILE* history_f= fopen(hist_path, "a+");
     // interupt signals
     signal(SIGINT, interupt_handler);
     signal(SIGTSTP, interupt_handler);
@@ -367,6 +367,7 @@ int main(){
     if (first_run)
         puts("Welcome to the Conch Shell!");
     input_loop(history_f);
+    trim_history(&history_f, hist_path);
     fclose(history_f);
     closedir(conch_dir);
 }

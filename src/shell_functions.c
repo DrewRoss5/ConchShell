@@ -13,8 +13,16 @@
 #define COMMAND_STR_LEN 1024000
 #define _GNU_SOURCE
 
+size_t get_file_size(FILE* file){
+    fseek(file, 0L, SEEK_END);
+    size_t size = ftell(file);
+    rewind(file);
+    return size;
+}
+
 // empties stdin (this function is not strictly nessecary, but looks less ugly than calling the while loop in the function)
 void flush_stdin() {while (fgetc(stdin) != '\n');}
+
 
 // this will be used for future features
 // returns true if dir contains file, otherwise, false
@@ -38,6 +46,49 @@ int find_str(char* target, char** arr, int size){
         }
     }
     return pos;
+}
+
+// returns the position of the first instance of the target character in a give string
+int find_char(char target, char* str, int size){
+    int pos = -1;
+    for (int i = 0; i < size; i++){
+        if (str[i] == target){
+            pos = i;
+            break;
+        }
+    }
+    return pos;
+}
+
+// ensures that the history file only contains, at most, 1024 line
+int trim_history(FILE** history_file, char* history_path){
+    size_t file_size = get_file_size(*history_file);
+    // read the file into a buffer
+    char* file_buf = (char*) malloc(file_size);
+    fread(file_buf, file_size, 1, *history_file);
+    // get the number of newlines in the file
+    int newlines = 0;
+    for (int i = 0; i < file_size; i++){
+        if (file_buf[i] == '\n')
+            newlines++;
+    }
+    // trim the file if necessary
+    if (newlines > 1024){   
+        // increase the pointer to get rid of the first n lines until only 1024 remain
+        int dif = newlines - 1024;
+        int offset = 0;
+        for (int i = 0; i < dif; i++){
+            int line_pos = find_char('\n', file_buf, file_size);
+            offset += (line_pos + 1);
+            file_size -= (line_pos + 1);
+        }
+        // overwrite the old history file
+        fclose(*history_file);
+        *history_file = fopen(history_path, "w");
+        fwrite((file_buf + offset), file_size, 1, *history_file);
+    }
+    free(file_buf);
+    return OK;
 }
 
 // changes the current working directory
@@ -172,10 +223,7 @@ int copy_file(char* src, char* dest){
     if (!in_file || !out_file){
         return ERR_1;
     }
-    // get the size of the input file
-    fseek(in_file, 0L, SEEK_END);
-    size_t file_size = ftell(in_file);
-    rewind(in_file);
+    size_t file_size = get_file_size(in_file);
     // read the file
     unsigned char* buf = (unsigned char*) malloc(sizeof(unsigned char) * file_size);
     fread(buf, file_size, 1, in_file);

@@ -5,6 +5,7 @@
 
 enum return_vals{OK=0, ERR_1, ERR_2, ERR_3, ERR_4, FLAG_ERR = 10, INVALID_BIN_ERR = 32512};
 
+int trim_history(FILE** history_file, char* history_path);
 int find_str(char* target, char** arr, int size);
 int file_exists(char* dir_name, char* file_name);
 int change_dir(char* path);
