@@ -301,7 +301,7 @@ char* basename(char* path){
 }
 
 // recieves and processes user input, then handles the given command
-void input_loop(FILE* history_file){
+void input_loop(FILE** history_file, char* history_path){
     char input[BUF_LEN];
     char* raw_args[MAX_ARGS];
     char* args[MAX_ARGS];
@@ -314,7 +314,9 @@ void input_loop(FILE* history_file){
     free(path);
     // get the user's arguments and strip the newline
     fgets(input, BUF_LEN, stdin);
-    fprintf(history_file, "%s", input);
+    fprintf(*history_file, "%s", input);
+    fclose(*history_file);
+    *history_file = fopen(history_path, "a+");
     input[strlen(input) - 1] = 0;
     int raw_arg_count = parse_args(input, raw_args);
     // parse the arguments and flags
@@ -327,14 +329,14 @@ void input_loop(FILE* history_file){
         raw_arg_count -= find_str(">", raw_args, raw_arg_count);
     if (!out_file){
         puts("Invalid output path!");
-        input_loop(history_file);
+        input_loop(history_file, history_path);
     }
     else{
         int exit = handle_command(raw_args, args, flags, raw_arg_count, arg_count, flag_count, out_file);
         if (out_file != stdout)
             fclose(out_file);
         if (!exit)
-            input_loop(history_file);
+            input_loop(history_file, history_path);
     }
 }
 
@@ -366,7 +368,7 @@ int main(){
     system("clear");
     if (first_run)
         puts("Welcome to the Conch Shell!");
-    input_loop(history_f);
+    input_loop(&history_f, hist_path);
     trim_history(&history_f, hist_path);
     fclose(history_f);
     closedir(conch_dir);
