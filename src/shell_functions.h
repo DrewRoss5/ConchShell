@@ -20,7 +20,7 @@ int echo(char** args, int arg_count, FILE* out_file);
 int copy_file(char* src, char* dest);
 int move_file(char* src, char* dest);
 int print_help(FILE* out_file);
-int exec_bin(char* bin_path, char** argv, int argc, FILE* out_file);
+int exec_bin(char** argv, int argc, FILE* out_file);
 int print_history(FILE* out_file);
 
 #endif

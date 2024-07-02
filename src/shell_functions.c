@@ -8,10 +8,11 @@
 #include <errno.h>
 #include "shell_functions.h"
 
-#define PATH_LEN 256
-#define FILE_BUF_LEN 1024
-#define COMMAND_STR_LEN 1024000
+#define PATH_LEN            256
+#define FILE_BUF_LEN        1024
+#define COMMAND_STR_LEN     102400
 #define _GNU_SOURCE
+
 
 size_t get_file_size(FILE* file){
     fseek(file, 0L, SEEK_END);
@@ -258,18 +259,21 @@ int print_help(FILE* out_file){
 }
 
 // runs a binary, piping it's output and input to this shell
-int exec_bin(char* bin_path, char** argv, int argc, FILE* out_file){
+int exec_bin(char** argv, int argc, FILE* out_file){
     // read the arguments as well as the binary
     char* command = (char*) malloc(sizeof(char*) * argc);
     sprintf(command, "%s", argv[0]);
     for (int i = 1; i < argc; i++)
         sprintf(command + strlen(command), " %s", argv[i]);
-    // validate the file can be opened exists
+    // validate the provided command can be run
+
+    // validate the file can be opened
     FILE* file_ptr;
     if ((file_ptr = popen(command, "r")) == NULL)
         return INVALID_BIN_ERR;
     // read the output of the process
     char buf[FILE_BUF_LEN];
+    
     while (fgets(buf, FILE_BUF_LEN, file_ptr))
         fprintf(out_file, "%s", buf);
     int result = pclose(file_ptr);

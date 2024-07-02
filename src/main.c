@@ -5,14 +5,19 @@
 #include <signal.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 #include "shell_functions.h"
 
-#define BUF_LEN 1024
-#define MAX_ARGS 256
-#define MAX_FLAGS 256
-#define PATH_LEN 256
-#define UNAME_LEN 32
-#define CONCH_PATH_LEN 39
+#define COLOR_RED       "\x1b[31m"
+#define COLOR_GREEN     "\x1b[32m"
+#define COLOR_CYAN      "\x1b[36m"
+#define COLOR_RESET     "\x1b[0m"
+#define BUF_LEN         1024
+#define MAX_ARGS        256
+#define MAX_FLAGS       256
+#define PATH_LEN        256
+#define UNAME_LEN       32
+#define CONCH_PATH_LEN  39
 #define _GNU_SOURCE
 
 // associate all commands with their respective flags (if they have any)
@@ -22,6 +27,27 @@ char* rmdir_flags[2] = {"-r", "-f"};
 char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "run", "history", "clear", "help", "exit"};
 
 enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, RUN, HISTORY, CLEAR, HELP, EXIT};
+
+// prints text in a provided color
+void color_printf(char* color, char* format, ...){
+    // set the color
+    printf("%s", color);
+    // get the formatting arguments
+    va_list format_args;
+    va_start(format_args, format);
+    vprintf(format, format_args);
+    // reset the color to default
+    printf(COLOR_RESET);
+}
+
+// prints an error message
+void show_error(char* format, ...){
+    color_printf(COLOR_RED, "error: ");
+    // get the formatting arguments
+    va_list format_args;
+    va_start(format_args, format);
+    vprintf(format, format_args);
+}
 
 // ensures that all flags for a given command are correct
 // TODO: Find if there is a way to do this that's more efficient than O(n^2)
@@ -35,7 +61,7 @@ int validate_flags(char* command_name, char** valid, int valid_count, char** pro
             }
         }
         if (!valid_flag){
-            printf("error: %s: unrecognized flag %s\n", command_name, provided[i]);
+            show_error("%s: unrecognized flag %s\n", command_name, provided[i]);
             return FLAG_ERR;
         }
     }
@@ -123,7 +149,7 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
                 strcpy(path, args[1]);
             // change the directory, or display an error if we failed
             if (change_dir(path))
-                printf("error: %s: directory not found\n", path);
+                show_error("%s: directory not found\n", path);
             break;
         case LS:
             // validate the provided flags
@@ -136,7 +162,7 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
                 getcwd(path, BUF_LEN);
             // list the directory's contents
             if (list_dir(path, flags, flag_count, out_file))
-                printf("error: %s: could not list the provided directory (does it exist?)\n", path);
+                show_error("%s: could not list the provided directory (does it exist?)\n", path);
             break;           
         case CWD:
             if (validate_flags("cwd", NULL, 0, flags, flag_count))
@@ -147,50 +173,50 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
             if (validate_flags("create", NULL, 0, flags, flag_count))
                 break;
             if (arg_count < 2)
-                puts("error: create: please provide a file opperand");
+                show_error("create: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     if (create_file(args[i]))
-                        printf("error: %s: cannot create file\n", args[i]);
+                        show_error("%s: cannot create file\n", args[i]);
             }
             break;
         case CREATE_D:
             if (validate_flags("created", NULL, 0, flags, flag_count))
                 break;
             if (arg_count < 2)
-                puts("error: created: please provide a directory opperand");
+                show_error("created: please provide a directory opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     if (create_dir(args[i]))
-                        printf("error: %s: cannot create directory\n", args[i]);
+                        show_error("%s: cannot create directory\n", args[i]);
             }
             break;
         case DEL:
             if (validate_flags("del", NULL, 0, flags, flag_count))
                 break;
             if (arg_count < 2)
-                puts("error: del: please provide a file opperand");
+                show_error("del: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     if (delete_file(args[i]))
-                        printf("error: %s: failed to delete the file, does it exist?\n", args[i]);
+                        show_error("%s: failed to delete the file, does it exist?\n", args[i]);
             }
             break;
         case RMDIR:
             if (validate_flags("rmdir", rmdir_flags, 2, flags, flag_count))
                 break;
             if (arg_count < 2)
-                puts("error: rmdir: please provide a path operand");
+                show_error("rmdir: please provide a path operand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     switch (delete_directory(args[i], flags, flag_count)){
                         case OK:
                             break;
                         case ERR_1:
-                            printf("error: %s: could not delete the directory (run with the -r flag to recursively delete the directory)\n", args[i]);
+                            show_error("%s: could not delete the directory (run with the -r flag to recursively delete the directory)\n", args[i]);
                             break;
                         case ERR_2: 
-                            printf("error: %s: could not delete directory\n", args[i]);
+                            show_error("%s: could not delete directory\n", args[i]);
                             break;
                         case ERR_3:
                             puts("directory not deleted");
@@ -205,26 +231,26 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
             if (validate_flags("cp", NULL, 0, flags, flag_count))
                 break;
             if (arg_count != 3)
-                puts("error: cp: command accepts exactly two arguments");
+                show_error("cp: command accepts exactly two arguments");
                 break;
             if (copy_file(args[1], args[2]))
-                printf("error: %s: could not read the file\n", args[1]);
+                show_error("%s: could not read the file\n", args[1]);
             break;
         case MV:
             if (validate_flags("mv", NULL, 0, flags, flag_count))
                 break;
             if (arg_count != 3){
-                puts("error: mv: command accepts exactly two arguments");
+                show_error("mv: command accepts exactly two arguments");
                 break;
             }
             switch (move_file(args[1], args[2])){
                 case OK:
                     break;
                 case ERR_1:
-                    printf("error: %s: could not access file\n", args[1]);
+                    show_error("%s: could not access file\n", args[1]);
                     break;
                 case ERR_2:
-                    printf("error: %s: could not delete source file\n", args[1]);
+                    show_error("%s: could not delete source file\n", args[1]);
                     break;
             }
             break;
@@ -237,24 +263,24 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
             if (validate_flags("echof", NULL, 0, flags, flag_count))
                 break;
             if (arg_count < 2)
-                puts("error: echof: please provide a file opperand");
+                show_error("echof: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     if (print_file(args[i], out_file))
-                        printf("error: %s: cannot read file\n", path);
+                        show_error("%s: cannot read file\n", path);
             }
             break;
         case RUN:
             if (arg_count < 2)
-                puts("error: run: please provide a binary path");
+                show_error("run: please provide a binary path");
             else{
-                if (exec_bin(args[1], raw_args + 1, raw_arg_count - 2, out_file) != OK)
-                    printf("error: %s: unrecognized command", args[1]);
+                if (exec_bin(raw_args + 1, raw_arg_count - 2, out_file) != OK)
+                    show_error("%s: unrecognized command", args[1]);
             }
             break;
         case HISTORY:       
             if (print_history(out_file) != OK)
-                puts("error: history: the history file could not be read.");
+                show_error("history: the history file could not be read.");
             break;
         case CLEAR:
             if (validate_flags("clear", NULL, 0, flags, flag_count))
@@ -272,14 +298,14 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
             return 1;
         default:
             if (strcmp("", command) && strcmp("test", command)){    
-                switch (exec_bin(args[1], raw_args, raw_arg_count - 1, out_file)){
+                switch (exec_bin(raw_args, raw_arg_count - 1, out_file)){
                     case OK:
                         break;
                     case INVALID_BIN_ERR:
-                        printf("error: %s: unrecognized file or command\n", command);
+                        show_error("%s: unrecognized file or command\n", command);
                         break;
                     default:
-                        printf("error: %s: exited with failing code\n", command);
+                        show_error("%s: exited with failing code\n", command);
                         break;
 
                 }
@@ -310,7 +336,9 @@ void input_loop(FILE** history_file, char* history_path){
     // display the prompt
     char* path = (char*) malloc(PATH_LEN);
     getcwd(path, PATH_LEN);
-    printf("%s|..%s > ", getlogin(), basename(path));
+    color_printf(COLOR_CYAN, "%s", getlogin());
+    printf(" : ");
+    color_printf(COLOR_GREEN, "..%s > ", basename(path));
     free(path);
     // get the user's arguments and strip the newline
     fgets(input, BUF_LEN, stdin);
@@ -342,7 +370,7 @@ void input_loop(FILE** history_file, char* history_path){
 
 // prevent escape with an interup
 void interupt_handler (int _){
-    printf("%s> ", getlogin());
+    color_printf(COLOR_CYAN, "%s > ", getlogin());
 }
 
 int main(){
