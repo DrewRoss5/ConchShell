@@ -5,13 +5,9 @@
 #include <signal.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <stdarg.h>
 #include "shell_functions.h"
+#include "color_print.h"
 
-#define COLOR_RED       "\x1b[31m"
-#define COLOR_GREEN     "\x1b[32m"
-#define COLOR_CYAN      "\x1b[36m"
-#define COLOR_RESET     "\x1b[0m"
 #define BUF_LEN         1024
 #define MAX_ARGS        256
 #define MAX_FLAGS       256
@@ -27,27 +23,6 @@ char* rmdir_flags[2] = {"-r", "-f"};
 char* command_list[COMMAND_COUNT] = {"cd", "ls", "cwd", "create", "created", "del", "rmdir", "cp", "mv", "echo", "echof", "run", "history", "clear", "help", "exit"};
 
 enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF, RUN, HISTORY, CLEAR, HELP, EXIT};
-
-// prints text in a provided color
-void color_printf(char* color, char* format, ...){
-    // set the color
-    printf("%s", color);
-    // get the formatting arguments
-    va_list format_args;
-    va_start(format_args, format);
-    vprintf(format, format_args);
-    // reset the color to default
-    printf(COLOR_RESET);
-}
-
-// prints an error message
-void show_error(char* format, ...){
-    color_printf(COLOR_RED, "error: ");
-    // get the formatting arguments
-    va_list format_args;
-    va_start(format_args, format);
-    vprintf(format, format_args);
-}
 
 // ensures that all flags for a given command are correct
 // TODO: Find if there is a way to do this that's more efficient than O(n^2)
