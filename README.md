@@ -2,15 +2,11 @@
 A Linux shell written in C, written as a hobbyist project
 
 # Roadmap/ToDo:
-- Finish implementing running executables
-  - ~~Allow executables to be called without explicitly using the "run" command~~
-  - ~~Allow passing arguments~~
-  - Improve support for intereactive applications
+- Improve support for interactive CLI applications
 - Add a config file
+  - Specify text colors
+  - Specify maximum history file length
 - Add support for aliases
-- Add background tasks
-- Add pipelining
-- Add support for variables
 - Add scripting support
 
 # Installation
