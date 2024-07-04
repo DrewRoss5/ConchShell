@@ -11,7 +11,7 @@ void color_printf(char* color, char* format, ...){
     va_start(format_args, format);
     vprintf(format, format_args);
     // reset the color to default
-    printf(COLOR_RESET);
+    printf("%s", COLOR_RESET);
 }
 
 // prints an error message

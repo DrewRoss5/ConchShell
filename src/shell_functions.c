@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include "shell_functions.h"
+#include "color_print.h"
 
 #define PATH_LEN            256
 #define FILE_BUF_LEN        1024
@@ -108,9 +109,31 @@ int list_dir(char* path, char** flags, int flag_count, FILE* out_file){
     DIR* dir = opendir(path);
     if (!dir)
         return ERR_1;
-    while ((entry = readdir(dir)) != NULL){
-        if (entry->d_name[0] != '.' || show_all)
-            fprintf(out_file, "%s\n", entry->d_name);
+    if (out_file == stdout){
+        while ((entry = readdir(dir)) != NULL){
+            if (entry->d_name[0] != '.' || show_all){
+                char* color;
+                switch (entry->d_type){
+                case DT_DIR:
+                    color = COLOR_GREEN;
+                    break;
+                case DT_LNK:
+                    color = COLOR_YELLOW;
+                    break;
+                default:
+                    color = COLOR_WHITE;
+                    break;
+                }
+                color_printf(color, "%s\n", entry->d_name);
+            }
+              
+        }
+    }
+    else{
+        while ((entry = readdir(dir)) != NULL){
+            if (entry->d_name[0] != '.' || show_all)
+                fprintf(out_file, "%s\n", entry->d_name);
+        }
     }
     closedir(dir);
     return OK;
@@ -292,7 +315,16 @@ int print_history(FILE* out_file){
     // print the contents of the file
     char tmp[FILE_BUF_LEN];
     int line_no = 0;
-    while (fgets(tmp, FILE_BUF_LEN, history_file))
-        printf("%d: %s", ++line_no, tmp);
+    if (out_file == stdout){
+        while (fgets(tmp, FILE_BUF_LEN, history_file)){
+            color_printf(COLOR_GREY, "%d: ", ++line_no);
+            printf("%s", tmp);
+        }
+    }
+    else{
+        while (fgets(tmp, FILE_BUF_LEN, history_file))
+            fprintf(out_file, "%d: %s", ++line_no, tmp);
+    
+    }
     return OK;
 }
