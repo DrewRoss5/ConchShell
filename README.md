@@ -2,12 +2,10 @@
 A Linux shell written in C, written as a hobbyist project
 
 # Roadmap/ToDo:
-- Improve support for interactive CLI applications
 - Add a config file
   - Specify text colors
   - Specify maximum history file length
 - Add support for aliases
-- Add scripting support
 
 # Installation
 To install conch, clone this repo, and from the conchShell directory, run the following commands (requires sudo access):<br>
