@@ -63,7 +63,7 @@ int find_char(char target, char* str, int size){
 }
 
 // ensures that the history file only contains, at most, 1024 line
-int trim_history(FILE** history_file, char* history_path){
+int trim_history(FILE** history_file, char* history_path, long int max_lines){
     size_t file_size = get_file_size(*history_file);
     // read the file into a buffer
     char* file_buf = (char*) malloc(file_size);
@@ -75,9 +75,9 @@ int trim_history(FILE** history_file, char* history_path){
             newlines++;
     }
     // trim the file if necessary
-    if (newlines > 1024){   
+    if (newlines > max_lines){   
         // increase the pointer to get rid of the first n lines until only 1024 remain
-        int dif = newlines - 1024;
+        int dif = newlines - max_lines;
         int offset = 0;
         for (int i = 0; i < dif; i++){
             int line_pos = find_char('\n', file_buf, file_size);
@@ -114,19 +114,18 @@ int list_dir(char* path, char** flags, int flag_count, FILE* out_file){
             if (entry->d_name[0] != '.' || show_all){
                 char* color;
                 switch (entry->d_type){
-                case DT_DIR:
-                    color = COLOR_GREEN;
-                    break;
-                case DT_LNK:
-                    color = COLOR_YELLOW;
-                    break;
-                default:
-                    color = COLOR_WHITE;
-                    break;
+                    case DT_DIR:
+                        color = COLOR_GREEN;
+                        break;
+                    case DT_LNK:
+                        color = COLOR_YELLOW;
+                        break;
+                    default:
+                        color = COLOR_RESET;
+                        break;
                 }
                 color_printf(color, "%s\n", entry->d_name);
-            }
-              
+            }     
         }
     }
     else{

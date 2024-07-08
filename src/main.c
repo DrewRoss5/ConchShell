@@ -4,9 +4,11 @@
 #include <unistd.h>
 #include <signal.h>
 #include <dirent.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include "shell_functions.h"
 #include "color_print.h"
+#include "config.h" 
 
 #define BUF_LEN         1024
 #define MAX_ARGS        256
@@ -26,7 +28,7 @@ enum commands {CD=0, LS, CWD, CREATE, CREATE_D, DEL, RMDIR, CP, MV, ECHO, ECHOF,
 
 // ensures that all flags for a given command are correct
 // TODO: Find if there is a way to do this that's more efficient than O(n^2)
-int validate_flags(char* command_name, char** valid, int valid_count, char** provided, int provided_count){
+int validate_flags(char* command_name, char** valid, int valid_count, char** provided, int provided_count, Config* config){
     for (int i = 0; i < provided_count; i++){
         int valid_flag = 0;
         for (int j = 0; j < valid_count; j++){
@@ -36,7 +38,7 @@ int validate_flags(char* command_name, char** valid, int valid_count, char** pro
             }
         }
         if (!valid_flag){
-            show_error("%s: unrecognized flag %s\n", command_name, provided[i]);
+            show_error(config->err_color, "%s: unrecognized flag %s\n", command_name, provided[i]);
             return FLAG_ERR;
         }
     }
@@ -100,7 +102,7 @@ int parse_flags(char** raw_args, char** args, char** flags, int arg_count){
 }
 
 // takes the arguments provided and runs the appropriate function
-int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count, int arg_count, int flag_count, FILE* out_file){
+int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count, int arg_count, int flag_count, FILE* out_file, Config* config){
     // determine the command code
     char* command = args[0];
     size_t command_no = -1;
@@ -115,7 +117,7 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
     char* valid_flags;
     switch (command_no){
         case CD:
-            if (validate_flags("cd", NULL, 0, flags,flag_count))
+            if (validate_flags("cd", NULL, 0, flags,flag_count, config))
                 break;
             // determine which directory to switch to
             if (arg_count == 1)
@@ -124,11 +126,11 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
                 strcpy(path, args[1]);
             // change the directory, or display an error if we failed
             if (change_dir(path))
-                show_error("%s: directory not found\n", path);
+                show_error(config->err_color, "%s: directory not found\n", path);
             break;
         case LS:
             // validate the provided flags
-            if (validate_flags("ls", ls_flags, 1, flags,flag_count))
+            if (validate_flags("ls", ls_flags, 1, flags,flag_count, config))
                 break;
             // determine the directory to list
             if (arg_count > 1)
@@ -137,61 +139,61 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
                 getcwd(path, BUF_LEN);
             // list the directory's contents
             if (list_dir(path, flags, flag_count, out_file))
-                show_error("%s: could not list the provided directory (does it exist?)\n", path);
+                show_error(config->err_color, "%s: could not list the provided directory (does it exist?)\n", path);
             break;           
         case CWD:
-            if (validate_flags("cwd", NULL, 0, flags, flag_count))
+            if (validate_flags("cwd", NULL, 0, flags, flag_count, config))
                 break;
             print_cwd(out_file);
             break;
         case CREATE:
-            if (validate_flags("create", NULL, 0, flags, flag_count))
+            if (validate_flags("create", NULL, 0, flags, flag_count, config))
                 break;
             if (arg_count < 2)
-                show_error("create: please provide a file opperand");
+                show_error(config->err_color, "create: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     if (create_file(args[i]))
-                        show_error("%s: cannot create file\n", args[i]);
+                        show_error(config->err_color, "%s: cannot create file\n", args[i]);
             }
             break;
         case CREATE_D:
-            if (validate_flags("created", NULL, 0, flags, flag_count))
+            if (validate_flags("created", NULL, 0, flags, flag_count, config))
                 break;
             if (arg_count < 2)
-                show_error("created: please provide a directory opperand");
+                show_error(config->err_color, "created: please provide a directory opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     if (create_dir(args[i]))
-                        show_error("%s: cannot create directory\n", args[i]);
+                        show_error(config->err_color, "%s: cannot create directory\n", args[i]);
             }
             break;
         case DEL:
-            if (validate_flags("del", NULL, 0, flags, flag_count))
+            if (validate_flags("del", NULL, 0, flags, flag_count, config))
                 break;
             if (arg_count < 2)
-                show_error("del: please provide a file opperand");
+                show_error(config->err_color, "del: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     if (delete_file(args[i]))
-                        show_error("%s: failed to delete the file, does it exist?\n", args[i]);
+                        show_error(config->err_color, "%s: failed to delete the file, does it exist?\n", args[i]);
             }
             break;
         case RMDIR:
-            if (validate_flags("rmdir", rmdir_flags, 2, flags, flag_count))
+            if (validate_flags("rmdir", rmdir_flags, 2, flags, flag_count, config))
                 break;
             if (arg_count < 2)
-                show_error("rmdir: please provide a path operand");
+                show_error(config->err_color, "rmdir: please provide a path operand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     switch (delete_directory(args[i], flags, flag_count)){
                         case OK:
                             break;
                         case ERR_1:
-                            show_error("%s: could not delete the directory (run with the -r flag to recursively delete the directory)\n", args[i]);
+                            show_error(config->err_color, "%s: could not delete the directory (run with the -r flag to recursively delete the directory)\n", args[i]);
                             break;
                         case ERR_2: 
-                            show_error("%s: could not delete directory\n", args[i]);
+                            show_error(config->err_color, config->err_color, "%s: could not delete directory\n", args[i]);
                             break;
                         case ERR_3:
                             puts("directory not deleted");
@@ -203,72 +205,72 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
             }  
             break;
         case CP:
-            if (validate_flags("cp", NULL, 0, flags, flag_count))
+            if (validate_flags("cp", NULL, 0, flags, flag_count, config))
                 break;
             if (arg_count != 3)
-                show_error("cp: command accepts exactly two arguments");
+                show_error(config->err_color, config->err_color, "cp: command accepts exactly two arguments");
                 break;
             if (copy_file(args[1], args[2]))
-                show_error("%s: could not read the file\n", args[1]);
+                show_error(config->err_color, config->err_color, "%s: could not read the file\n", args[1]);
             break;
         case MV:
-            if (validate_flags("mv", NULL, 0, flags, flag_count))
+            if (validate_flags("mv", NULL, 0, flags, flag_count, config))
                 break;
             if (arg_count != 3){
-                show_error("mv: command accepts exactly two arguments");
+                show_error(config->err_color, config->err_color, "mv: command accepts exactly two arguments");
                 break;
             }
             switch (move_file(args[1], args[2])){
                 case OK:
                     break;
                 case ERR_1:
-                    show_error("%s: could not access file\n", args[1]);
+                    show_error(config->err_color, config->err_color, "%s: could not access file\n", args[1]);
                     break;
                 case ERR_2:
-                    show_error("%s: could not delete source file\n", args[1]);
+                    show_error(config->err_color, config->err_color, "%s: could not delete source file\n", args[1]);
                     break;
             }
             break;
         case ECHO:
-            if (validate_flags("echo", NULL, 0, flags, flag_count))
+            if (validate_flags("echo", NULL, 0, flags, flag_count, config))
                 break;
             echo(args + 1, arg_count - 1, out_file);
             break;
         case ECHOF:
-            if (validate_flags("echof", NULL, 0, flags, flag_count))
+            if (validate_flags("echof", NULL, 0, flags, flag_count, config))
                 break;
             if (arg_count < 2)
-                show_error("echof: please provide a file opperand");
+                show_error(config->err_color, config->err_color, "echof: please provide a file opperand");
             else{
                 for (int i = 1; i < arg_count; i++)
                     if (print_file(args[i], out_file))
-                        show_error("%s: cannot read file\n", path);
+                        show_error(config->err_color, config->err_color, "%s: cannot read file\n", path);
             }
             break;
         case RUN:
             if (arg_count < 2)
-                show_error("run: please provide a binary path");
+                show_error(config->err_color, config->err_color, "run: please provide a binary path");
             else{
                 if (exec_bin(raw_args + 1, raw_arg_count - 2, out_file) != OK)
-                    show_error("%s: unrecognized command", args[1]);
+                    show_error(config->err_color, config->err_color, "%s: unrecognized command", args[1]);
             }
             break;
         case HISTORY:       
             if (print_history(out_file) != OK)
-                show_error("history: the history file could not be read.");
+                show_error(config->err_color, config->err_color, "history: the history file could not be read.");
             break;
         case CLEAR:
-            if (validate_flags("clear", NULL, 0, flags, flag_count))
+            if (validate_flags("clear", NULL, 0, flags, flag_count, config))
                 break;
             system("clear");
             break;
         case HELP:
-            if (validate_flags("help", NULL, 0, flags, flag_count))
+            if (validate_flags("help", NULL, 0, flags, flag_count, config))
                 break;
             print_help(out_file);
             break;
         case EXIT:
-            if (validate_flags("exit", NULL, 0, flags, flag_count))
+            if (validate_flags("exit", NULL, 0, flags, flag_count, config))
                 break;
             return 1;
         default:
@@ -277,10 +279,10 @@ int handle_command(char** raw_args, char** args, char** flags, int raw_arg_count
                     case OK:
                         break;
                     case INVALID_BIN_ERR:
-                        show_error("%s: unrecognized file or command\n", command);
+                        show_error(config->err_color, config->err_color, "%s: unrecognized file or command\n", command);
                         break;
                     default:
-                        show_error("%s: exited with failing code\n", command);
+                        show_error(config->err_color, "%s: exited with failing code\n", command);
                         break;
 
                 }
@@ -302,7 +304,7 @@ char* basename(char* path){
 }
 
 // recieves and processes user input, then handles the given command
-void input_loop(FILE** history_file, char* history_path){
+void input_loop(FILE** history_file, char* history_path, Config* config){
     char input[BUF_LEN];
     char* raw_args[MAX_ARGS];
     char* args[MAX_ARGS];
@@ -311,9 +313,9 @@ void input_loop(FILE** history_file, char* history_path){
     // display the prompt
     char* path = (char*) malloc(PATH_LEN);
     getcwd(path, PATH_LEN);
-    color_printf(COLOR_CYAN, "%s", getlogin());
+    color_printf(config->user_color, "%s", getlogin());
     printf(" : ");
-    color_printf(COLOR_GREEN, "..%s > ", basename(path));
+    color_printf(config->path_color, "..%s > ", basename(path));
     free(path);
     // get the user's arguments and strip the newline
     fgets(input, BUF_LEN, stdin);
@@ -332,14 +334,14 @@ void input_loop(FILE** history_file, char* history_path){
         raw_arg_count -= find_str(">", raw_args, raw_arg_count);
     if (!out_file){
         puts("Invalid output path!");
-        input_loop(history_file, history_path);
+        input_loop(history_file, history_path, config);
     }
     else{
-        int exit = handle_command(raw_args, args, flags, raw_arg_count, arg_count, flag_count, out_file);
+        int exit = handle_command(raw_args, args, flags, raw_arg_count, arg_count, flag_count, out_file, config);
         if (out_file != stdout)
             fclose(out_file);
         if (!exit)
-            input_loop(history_file, history_path);
+            input_loop(history_file, history_path, config);
     }
 }
 
@@ -354,16 +356,37 @@ int main(){
     char conch_path[CONCH_PATH_LEN];
     sprintf(conch_path, "/home/%s/.conch", getlogin());
     DIR* conch_dir = opendir(conch_path);
+    char config_path[BUF_LEN];
+    sprintf(config_path, "%s/config", conch_path);
     if (!conch_dir){
         first_run = 1;
         puts("Welcome to the Conch Shell!");
         mkdir(conch_path, 0777);
         conch_dir = opendir(conch_path);
+        FILE* tmp_file = fopen(config_path, "w");
+        fclose(tmp_file);
+
+        
     }
     // open the history file
     char hist_path[BUF_LEN];
     sprintf(hist_path, "%s/history", conch_path);
     FILE* history_f= fopen(hist_path, "a+");
+    Config config;
+    int config_res = parse_config(&config, config_path);
+    switch (config_res){
+        case OK:
+            break;
+        case ERR_1:
+            show_error(COLOR_RED, "conch: config: the configuration file could not be read\n");
+            return 1;
+        case ERR_2:
+            show_error(COLOR_RED, "conch: config: invalid option at line %d\n", errno);
+            return 1;
+        case ERR_3:
+            show_error(COLOR_RED, "conch: config: invalid value at line %d\n", errno);
+            return 1;
+    }
     // interupt signals
     signal(SIGINT, interupt_handler);
     signal(SIGTSTP, interupt_handler);
@@ -371,8 +394,8 @@ int main(){
     system("clear");
     if (first_run)
         puts("Welcome to the Conch Shell!");
-    input_loop(&history_f, hist_path);
-    trim_history(&history_f, hist_path);
+    input_loop(&history_f, hist_path, &config);
+    trim_history(&history_f, hist_path, config.history_max);
     fclose(history_f);
     closedir(conch_dir);
 }

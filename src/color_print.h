@@ -11,6 +11,6 @@
 #define COLOR_RESET     "\x1b[0m"
 
 void color_printf(char* color, char* format, ...);
-void show_error(char* format, ...);
+void show_error(char* err_color, char* format, ...);
 
 #endif

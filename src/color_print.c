@@ -15,8 +15,8 @@ void color_printf(char* color, char* format, ...){
 }
 
 // prints an error message
-void show_error(char* format, ...){
-    color_printf(COLOR_RED, "error: ");
+void show_error(char* err_color, char* format, ...){
+    printf("%serror%s: ", err_color, COLOR_RESET);
     // get the formatting arguments
     va_list format_args;
     va_start(format_args, format);
