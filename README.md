@@ -2,14 +2,31 @@
 A Linux shell written in C, written as a hobbyist project
 
 # Roadmap/ToDo:
-- Add a config file
-  - Specify text colors
-  - Specify maximum history file length
 - Add support for aliases
 
 # Installation
 To install conch, clone this repo, and from the conchShell directory, run the following commands (requires sudo access):<br>
 `chmod install/install.sh +x`<br>`sudo ./install/install.sh`
+# Configuration
+Conch has support for simple user configuration, to edit the configuration, open `~/.conch/config` and input your option with the following syntax:<br>`<option>=<value>`<br>
+## Current options
+- ### history_max_lines
+  - Determines the maximum number of commands to be stored in the shell history
+  - Default = 1024
+  - Valid values: Any integer between 1 and 2,147,483,647
+- ### user_color
+  - Determines the color the user's username should be displayed in when displaying the prompt
+  - Default = blue
+  - Valid values: "red", "green", "blue", "yellow", "grey", "white", "default"
+- ### path_color
+  - Determines the color the user's current working directory should be displayed in when displaying the prompt
+  - Default = green
+  - Valid values: "red", "green", "blue", "yellow", "grey", "white", "default"
+- ### error_color
+  - Determines the color error messages should be displayed in
+  - Default = red
+  - Valid values: "red", "green", "blue", "yellow", "grey", "white", "default"  
+  
 
 # Usage
 Once you have installed conch, simply call `conch` to enter the shell.
