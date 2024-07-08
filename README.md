@@ -3,6 +3,7 @@ A Linux shell written in C, written as a hobbyist project
 
 # Roadmap/ToDo:
 - Add support for aliases
+- Add basic scripting support
 
 # Installation
 To install conch, clone this repo, and from the conchShell directory, run the following commands (requires sudo access):<br>
